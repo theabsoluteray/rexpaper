@@ -29,13 +29,13 @@ component NavButton inherits Rectangle {
     // Hover effect for inactive buttons
     states [
         hover when touch.has-hover && !root.active: {
-            background: #2a2a2a;
+            background: white;
         }
     ]
 }
 
 export component NavBar inherits Rectangle {
-    background: #979d9e;
+    background: #c1bdbd;
     width: 200px;
     in property <string> active-page;
     callback page-selected(string);
@@ -54,7 +54,7 @@ export component NavBar inherits Rectangle {
             font-size: 24px;
             font-weight: FontWeight.extra-bold;    
             text: "Rexpaper";
-            color: white;
+            color: black;
         }
 
         // the buttons for the navbar (Now using NavButton)
