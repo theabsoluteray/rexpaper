@@ -1,0 +1,22 @@
+/target
+
+# Rust
+*.swp
+*.bak
+*.tmp
+
+# IDE / Editor
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test / Dev artifacts
+test_*.rs
+*.log
+/target

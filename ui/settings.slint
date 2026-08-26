@@ -1,0 +1,22 @@
+import { VerticalBox } from "std-widgets.slint";
+
+export component SettingsPage inherits Rectangle {
+    background: #f0f0f0;
+
+    VerticalBox {
+        padding: 40px;
+        spacing: 20px;
+        alignment: start;
+
+        Text {
+            text: "Settings";
+            font-size: 32px;
+            color: #333333;
+        }
+
+        Text {
+            text: "This is where your settings will go.";
+            color: #666666;
+        }
+    }
+}

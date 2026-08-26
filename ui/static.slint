@@ -1,0 +1,21 @@
+import { VerticalBox } from "std-widgets.slint";
+
+export component StaticPage inherits Rectangle {
+    background: #d0a6a6;
+
+    VerticalBox {
+        padding: 40px;
+        spacing: 20px;
+        alignment: start;
+
+        Text {
+            text: "Static Content";
+            font-size: 50px;
+            color: #333333;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        
+    }
+}

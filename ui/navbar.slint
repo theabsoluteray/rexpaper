@@ -1,0 +1,83 @@
+import { HorizontalBox, VerticalBox, TextEdit } from "std-widgets.slint";
+
+// 1. Create the custom button to escape the default OS styling
+component NavButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> active;
+    callback clicked();
+
+    height: 35px;
+    border-radius: 5px;
+    
+    // The background color changes based on whether the button is active or not
+  
+    background: root.active ? #ffffff : transparent;
+    animate background { duration: 0.2s; easing: ease-in-out; }
+    Text {
+        text: root.text;
+        // Text is white if active, dimmed if inactive
+        color: root.active ? black : #080808;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        font-size: 14px;
+    }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    // Hover effect for inactive buttons
+    states [
+        hover when touch.has-hover && !root.active: {
+            background: #2a2a2a;
+        }
+    ]
+}
+
+export component NavBar inherits Rectangle {
+    background: #979d9e;
+    width: 200px;
+    in property <string> active-page;
+    callback page-selected(string);
+    
+    VerticalBox {
+        padding-left: 10px;
+        padding-top: 10px; // navbar buttons top padding
+        padding-right: 10px;
+        padding-bottom: 10px;
+        spacing: 10px;
+        
+        // the text area for the title of the app
+        Text{
+            horizontal-alignment: center;
+            vertical-alignment: center;                                
+            font-size: 24px;
+            font-weight: FontWeight.extra-bold;    
+            text: "Rexpaper";
+            color: white;
+        }
+
+        // the buttons for the navbar (Now using NavButton)
+        NavButton { 
+            text: "static"; 
+            active: root.active-page == "static";
+            clicked => { root.page-selected("static"); } 
+        }
+        
+        NavButton { 
+            text: "live"; 
+            active: root.active-page == "live";
+            clicked => { root.page-selected("live"); } 
+        }
+        
+        // This spacer pushes the settings button down
+        Rectangle {}
+        
+        // the settings button at the bottom of the navbar
+        NavButton { 
+            text: "settings";
+            active: root.active-page == "settings";
+            clicked => { root.page-selected("settings"); }
+        }
+    }
+}

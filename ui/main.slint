@@ -1,0 +1,42 @@
+import { VerticalBox, HorizontalBox , TextEdit } from "std-widgets.slint";
+import { NavBar } from "navbar.slint";
+import { area } from "area.slint";
+import { SettingsPage } from "settings.slint";
+import { StaticPage } from "static.slint";
+import { LivePage } from "live.slint";
+
+export component MainWindow inherits Window {
+    title: "RexPaper";
+    icon: @image-url("../assets/logo.png");
+    min-width: 800px;
+    min-height: 600px;
+    preferred-width: 800px;
+    preferred-height: 600px;
+    background: #f0f0f0;
+    maximized: true;
+   
+    property <string> active-page: "static"; // Default page
+    HorizontalBox {
+    padding: 0px; 
+    spacing: 0px;
+        
+     
+   
+    NavBar {
+            // This catches the click from Step 1 and updates the active-page
+            active-page: root.active-page;
+            page-selected(page-name) => {
+                root.active-page = page-name;
+            }
+        }
+        
+        // The Main Content Area
+        Rectangle {
+            // Add this line to link the state to your new page
+            if root.active-page == "settings" : SettingsPage {}
+            if root.active-page == "static" : StaticPage {}
+            if root.active-page == "live" : LivePage {}
+        }
+
+    }
+}
