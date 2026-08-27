@@ -1,0 +1,21 @@
+// Define the custom data structure
+export struct WallpaperData {
+    path: string,
+    category: string,
+}
+
+export global AppStore {
+    in-out property <string> wallpaper-dir: "No folder selected";
+    
+    // Use our new struct instead of just strings
+    in-out property <[WallpaperData]> static-wallpapers: [];
+    in-out property <[WallpaperData]> live-wallpapers: [];
+    
+    // A list of subfolders we found (to build your UI filter buttons)
+    in-out property <[string]> categories: ["Root"];
+    
+    // Keep track of what the user is currently filtering by
+    in-out property <string> active-category: "Root"; 
+
+    callback select-wallpaper-dir();
+}

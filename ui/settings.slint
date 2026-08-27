@@ -1,22 +1,87 @@
 import { VerticalBox } from "std-widgets.slint";
+import { VerticalBox, HorizontalBox, Switch, ComboBox, GroupBox, LineEdit, Button } from "std-widgets.slint";
+import {AppStore} from "store.slint";
 
 export component SettingsPage inherits Rectangle {
-    background: #fffdfd;
+    background: #080808;
+
+    // --- Properties sent FROM Rust to Slint (to populate saved settings) ---
+    in property <bool> run-on-startup: false;
+    in property <bool> pause-on-fullscreen: true;
+    in property <string> wallpaper-dir: "/home/user/wallpapers";
+
+    // --- Callbacks sent FROM Slint TO Rust (when user changes something) ---
+    callback toggle-startup(bool);
+    callback toggle-pause-fullscreen(bool);
+    callback select-wallpaper-dir();
 
     VerticalBox {
-        padding: 40px;
+        padding: 30px;
         spacing: 20px;
         alignment: start;
 
         Text {
             text: "Settings";
-            font-size: 32px;
-            color: #333333;
+            font-size: 28px;
+            font-weight: 800;
+            color: #222222;
         }
 
-        Text {
-            text: "This is where your settings will go.";
-            color: #666666;
+        // --- SECTION 1: App & System Settings ---
+        GroupBox {
+            title: "General Behavior";
+
+            VerticalBox {
+                spacing: 12px;
+
+                Switch {
+                    text: "Run on System Startup";
+                    checked: root.run-on-startup;
+                    toggled => {
+                        root.toggle-startup(self.checked);
+                    }
+                }
+
+                Switch {
+                    text: "Pause Live Wallpapers on Fullscreen Games/Apps";
+                    checked: root.pause-on-fullscreen;
+                    toggled => {
+                        root.toggle-pause-fullscreen(self.checked);
+                    }
+                }
+            }
+        }
+
+        // --- SECTION 2: Directories ---
+        GroupBox {
+            title: "Wallpaper Storage";
+
+            VerticalBox {
+                spacing: 10px;
+
+                Text {
+                    text: "Either select a directory or add a git repository to download wallpapers from. The app will automatically scan the directory for images and use them as wallpapers.";
+                    color: #555555;
+                    wrap: word-wrap;
+                    font-size: 14px;
+                }
+
+                HorizontalBox {
+                    spacing: 10px;
+
+                    LineEdit {
+                        text: root.wallpaper-dir;
+                        enabled: false; // Read-only path display
+                    }
+
+                    Button {
+                        text: "Browse...";
+                        clicked => {
+                            AppStore.select-wallpaper-dir();
+                        }
+                    }
+                }
+            }
         }
     }
 }
