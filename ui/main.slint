@@ -9,27 +9,28 @@ export { AppStore }
 export component MainWindow inherits Window {
     title: "RexPaper";
     icon: @image-url("../assets/logo.png");
-    
+
     min-height: 720px;
     min-width: 1280px;
-    background: #f0f0f0;
-  
+    background: #0d1117; // Deep navy base for entire window
+
     in-out property <string> active-page: "static";
 
     HorizontalLayout {
-    
+
+        // Left sidebar navigation — fixed 220px width
         NavBar {
             active-page: root.active-page;
             page-selected(page-name) => {
                 root.active-page = page-name;
             }
         }
-        
-        // THE FIX: Use a Layout primitive instead of a Rectangle
+
+        // Content area — stretches to fill remaining width
+        // Pages swap in/out based on active-page state
         VerticalLayout {
             horizontal-stretch: 1;
-            
-            // THE FIX: Remove manual sizes. The layout stretches them automatically!
+
             if root.active-page == "settings" : SettingsPage {}
             if root.active-page == "static" : StaticPage {}
             if root.active-page == "live" : LivePage {}

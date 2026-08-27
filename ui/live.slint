@@ -1,19 +1,44 @@
 import { VerticalBox } from "std-widgets.slint";
 
 export component LivePage inherits Rectangle {
-    background: #ffffff;
+    background: #0d1117; // Dark background matching main window
 
     VerticalBox {
-        padding: 40px;
-        spacing: 20px;
+        padding: 48px; // Generous padding for centered feel
+        spacing: 16px;
         alignment: start;
 
+        // Page heading — large title
         Text {
-            text: "live Content";
-            font-size: 32px;
-            color: #333333;
+            text: "Live Wallpapers";
+            font-size: 28px;
+            font-weight: 700;
+            color: #e6edf3; // Primary light text
+            horizontal-alignment: left;
         }
 
-     
+        // Accent bar under heading — consistent with settings page style
+        Rectangle {
+            height: 3px;
+            width: 40px;
+            background: #1f6feb; // Blue accent bar
+            border-radius: 2px;
+        }
+
+        // Placeholder content area — will be filled with wallpaper grid
+        Rectangle {
+            vertical-stretch: 1;
+            background: #161b22; // Slightly lighter surface for content area
+            border-radius: 8px; // Rounded corners for content card
+
+            // Empty state text — shown when no wallpapers are loaded
+            Text {
+                text: "No live wallpapers loaded";
+                font-size: 15px;
+                color: #484f58; // Very muted placeholder text
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
     }
 }

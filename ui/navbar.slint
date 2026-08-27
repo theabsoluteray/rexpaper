@@ -1,80 +1,124 @@
 import { HorizontalBox, VerticalBox, TextEdit } from "std-widgets.slint";
 
-// 1. Create the custom button to escape the default OS styling
+// Custom nav button with active indicator bar on the left
 component NavButton inherits Rectangle {
     in property <string> text;
     in property <bool> active;
     callback clicked();
 
-    height: 35px;
-    border-radius: 5px;
-    
-    // The background color changes based on whether the button is active or not
-  
-    background: root.active ? #ffffff : transparent;
+    height: 40px; // Slightly taller for better click targets
+    border-radius: 6px; // Softer corners
+
+    background: root.active ? #1f6feb : transparent; // Blue accent when selected
     animate background { duration: 0.2s; easing: ease-in-out; }
+
+    // Left accent bar — visible only when active, gives a "selected" indicator
+    Rectangle {
+        x: 0px;
+        y: parent.height / 2 - 10px;
+        width: 3px;
+        height: 20px;
+        border-radius: 2px; // Rounded corners on indicator bar
+        background: root.active ? #ffffff : transparent; // White bar on blue bg
+    }
+
     Text {
         text: root.text;
-        // Text is white if active, dimmed if inactive
-        color: root.active ? black : #080808;
+        color: root.active ? #ffffff : #8b949e; // White when active, muted gray when not
         horizontal-alignment: center;
         vertical-alignment: center;
         font-size: 14px;
+        font-weight: root.active ? FontWeight.bold : FontWeight.normal; // Bold when active
     }
 
     touch := TouchArea {
         clicked => { root.clicked(); }
     }
 
-    // Hover effect for inactive buttons
+    // Hover effect — subtle surface shift for inactive buttons
     states [
         hover when touch.has-hover && !root.active: {
-            background: white;
+            background: #21262d;
         }
     ]
 }
 
 export component NavBar inherits Rectangle {
-    background: #c1bdbd;
-    width: 200px;
+    background: #161b22; // Dark sidebar, slightly lighter than main bg
+    width: 220px; // Wider for better padding around nav items
     in property <string> active-page;
     callback page-selected(string);
-    
+
+    // Right edge border — subtle separator between sidebar and content
+    Rectangle {
+        x: parent.width - 1px;
+        width: 1px;
+        height: parent.height;
+        background: #30363d; // Subtle border line
+    }
+
     VerticalBox {
-        padding-left: 10px;
-        padding-top: 10px; // navbar buttons top padding
-        padding-right: 10px;
-        padding-bottom: 10px;
-        spacing: 10px;
-        
-        // the text area for the title of the app
-        Text{
-            horizontal-alignment: center;
-            vertical-alignment: center;                                
-            font-size: 24px;
-            font-weight: FontWeight.extra-bold;    
-            text: "Rexpaper";
-            color: black;
+        padding-left: 16px;
+        padding-top: 24px; // Top spacing for breathing room
+        padding-right: 16px;
+        padding-bottom: 16px;
+        spacing: 6px; // Tighter spacing between nav items
+
+        // App branding area
+        VerticalLayout {
+            spacing: 4px;
+            padding-bottom: 8px; // Space below branding before nav items
+
+            Text {
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                font-size: 22px;
+                font-weight: FontWeight.extra-bold;
+                text: "RexPaper";
+                color: #e6edf3; // Warm light text
+            }
+
+            // Subtle tagline under app name
+            Text {
+                horizontal-alignment: center;
+                text: "wallpaper manager";
+                font-size: 11px;
+                color: #484f58; // Very muted, decorative only
+            }
         }
 
-        // the buttons for the navbar (Now using NavButton)
-        NavButton { 
-            text: "static"; 
+        // Separator line between branding and nav items
+        Rectangle {
+            height: 1px;
+            background: #21262d;
+            horizontal-stretch: 1;
+        }
+
+        // Main navigation buttons
+        NavButton {
+            text: "static";
             active: root.active-page == "static";
-            clicked => { root.page-selected("static"); } 
+            clicked => { root.page-selected("static"); }
         }
-        
-        NavButton { 
-            text: "live"; 
+
+        NavButton {
+            text: "live";
             active: root.active-page == "live";
-            clicked => { root.page-selected("live"); } 
+            clicked => { root.page-selected("live"); }
         }
-        
-        // This spacer pushes the settings button down
-        Rectangle {}
-        
-        // the settings button at the bottom of the navbar
-        NavButton { 
+
+        // Spacer pushes settings to the bottom of the sidebar
+        Rectangle { vertical-stretch: 1; }
+
+        // Separator before settings — visual grouping
+        Rectangle {
+            height: 1px;
+            background: #21262d;
+            horizontal-stretch: 1;
+        }
+
+        // Settings pinned to bottom — separated from main nav
+        NavButton {
             text: "settings";
             active: root.active-page == "settings";
             clicked => { root.page-selected("settings"); }

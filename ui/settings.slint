@@ -3,7 +3,7 @@ import { VerticalBox, HorizontalBox, Switch, ComboBox, GroupBox, LineEdit, Butto
 import {AppStore} from "store.slint";
 
 export component SettingsPage inherits Rectangle {
-    background: #080808;
+    background: #0d1117; // Match main window dark background
 
     // --- Properties sent FROM Rust to Slint (to populate saved settings) ---
     in property <bool> run-on-startup: false;
@@ -16,15 +16,29 @@ export component SettingsPage inherits Rectangle {
     callback select-wallpaper-dir();
 
     VerticalBox {
-        padding: 30px;
-        spacing: 20px;
+        padding: 40px; // More generous padding for content breathing room
+        spacing: 28px; // Increased gap between sections
         alignment: start;
 
-        Text {
-            text: "Settings";
-            font-size: 28px;
-            font-weight: 800;
-            color: #222222;
+        // Page title — large and prominent
+        VerticalLayout {
+            spacing: 6px;
+            padding-bottom: 4px; // Small gap below title block
+
+            Text {
+                text: "Settings";
+                font-size: 28px;
+                font-weight: 800;
+                color: #e6edf3; // Primary light text
+            }
+
+            // Accent underline — adds a color accent below the title
+            Rectangle {
+                height: 3px;
+                width: 48px; // Short accent bar, not full width
+                background: #1f6feb; // Matches nav active accent
+                border-radius: 2px;
+            }
         }
 
         // --- SECTION 1: App & System Settings ---
@@ -32,7 +46,7 @@ export component SettingsPage inherits Rectangle {
             title: "General Behavior";
 
             VerticalBox {
-                spacing: 12px;
+                spacing: 14px; // More space between toggle rows
 
                 Switch {
                     text: "Run on System Startup";
@@ -57,23 +71,26 @@ export component SettingsPage inherits Rectangle {
             title: "Wallpaper Storage";
 
             VerticalBox {
-                spacing: 10px;
+                spacing: 14px;
 
+                // Helper text explaining what this section does
                 Text {
-                    text: "Either select a directory or add a git repository to download wallpapers from. The app will automatically scan the directory for images and use them as wallpapers.";
-                    color: #555555;
+                    text: "Select a directory or add a git repository to download wallpapers from. The app will automatically scan for images.";
+                    color: #8b949e; // Muted secondary text
                     wrap: word-wrap;
-                    font-size: 14px;
+                    font-size: 13px; // Slightly smaller for helper text
                 }
 
                 HorizontalBox {
                     spacing: 10px;
 
+                    // Read-only path display — shows current wallpaper directory
                     LineEdit {
                         text: root.wallpaper-dir;
-                        enabled: false; // Read-only path display
+                        enabled: false;
                     }
 
+                    // Browse button — triggers native file dialog via Rust
                     Button {
                         text: "Browse...";
                         clicked => {
