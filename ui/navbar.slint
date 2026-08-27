@@ -1,125 +1,128 @@
-import { HorizontalBox, VerticalBox, TextEdit } from "std-widgets.slint";
+import { Theme } from "store.slint";
 
-// Custom nav button with active indicator bar on the left
-component NavButton inherits Rectangle {
-    in property <string> text;
+component NavItem inherits Rectangle {
+    in property <string> label;
+    in property <image> icon;
+    in property <bool> has-icon: true;
     in property <bool> active;
     callback clicked();
 
-    height: 40px; // Slightly taller for better click targets
-    border-radius: 6px; // Softer corners
+    height: 36px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: active ? Theme.accent : transparent;
 
-    background: root.active ? #1f6feb : transparent; // Blue accent when selected
-    animate background { duration: 0.2s; easing: ease-in-out; }
+    background: active ? Theme.nav-active : transparent;
+    animate background { duration: 0.12s; }
+    animate border-color { duration: 0.12s; }
 
-    // Left accent bar — visible only when active, gives a "selected" indicator
-    Rectangle {
-        x: 0px;
-        y: parent.height / 2 - 10px;
-        width: 3px;
-        height: 20px;
-        border-radius: 2px; // Rounded corners on indicator bar
-        background: root.active ? #ffffff : transparent; // White bar on blue bg
+    if has-icon : Image {
+        x: 12px;
+        y: (parent.height - self.height) / 2;
+        source: icon;
+        width: 18px;
+        height: 18px;
+        colorize: active ? Theme.accent : Theme.text-secondary;
     }
 
     Text {
-        text: root.text;
-        color: root.active ? #ffffff : #8b949e; // White when active, muted gray when not
-        horizontal-alignment: center;
+        x: has-icon ? 36px : 16px;
+        text: label;
+        color: active ? Theme.text : Theme.text-secondary;
         vertical-alignment: center;
-        font-size: 14px;
-        font-weight: root.active ? FontWeight.bold : FontWeight.normal; // Bold when active
+        horizontal-alignment: left;
+        font-size: 15px;
+        font-weight: active ? 700 : 600;
     }
 
     touch := TouchArea {
+        mouse-cursor: pointer;
         clicked => { root.clicked(); }
     }
 
-    // Hover effect — subtle surface shift for inactive buttons
     states [
-        hover when touch.has-hover && !root.active: {
-            background: #21262d;
+        hover when touch.has-hover && !active: {
+            background: Theme.hover;
+            border-color: Theme.border;
         }
     ]
 }
 
 export component NavBar inherits Rectangle {
-    background: #161b22; // Dark sidebar, slightly lighter than main bg
-    width: 220px; // Wider for better padding around nav items
+    background: Theme.sidebar;
+    width: 220px;
+
     in property <string> active-page;
     callback page-selected(string);
 
-    // Right edge border — subtle separator between sidebar and content
     Rectangle {
         x: parent.width - 1px;
         width: 1px;
         height: parent.height;
-        background: #30363d; // Subtle border line
+        background: Theme.border;
     }
 
-    VerticalBox {
-        padding-left: 16px;
-        padding-top: 24px; // Top spacing for breathing room
-        padding-right: 16px;
-        padding-bottom: 16px;
-        spacing: 6px; // Tighter spacing between nav items
+    VerticalLayout {
+        padding-top: 0px;
+        padding-bottom: 12px;
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 2px;
 
-        // App branding area
         VerticalLayout {
-            spacing: 4px;
-            padding-bottom: 8px; // Space below branding before nav items
+            padding-top: 10px;
+            padding-left: 4px;
+            padding-bottom: 20px;
 
             Text {
-                horizontal-alignment: center;
-                vertical-alignment: center;
-                font-size: 22px;
-                font-weight: FontWeight.extra-bold;
                 text: "RexPaper";
-                color: #e6edf3; // Warm light text
-            }
-
-            // Subtle tagline under app name
-            Text {
+                font-family: "jim nightshade";  
+                font-size: 25px;
+                font-weight: 700;
+                color: Theme.text;
                 horizontal-alignment: center;
-                text: "wallpaper manager";
-                font-size: 11px;
-                color: #484f58; // Very muted, decorative only
             }
         }
 
-        // Separator line between branding and nav items
-        Rectangle {
-            height: 1px;
-            background: #21262d;
-            horizontal-stretch: 1;
+        VerticalLayout {
+            padding-bottom: 8px;
+
+            Rectangle {
+                height: 1px;
+                horizontal-stretch: 1;
+                background: Theme.divider;
+            }
         }
 
-        // Main navigation buttons
-        NavButton {
-            text: "static";
+        NavItem {
+            icon: @image-url("../assets/static.png");
+            label: "Static";
             active: root.active-page == "static";
             clicked => { root.page-selected("static"); }
         }
 
-        NavButton {
-            text: "live";
+        NavItem {
+            icon: @image-url("../assets/live.png");
+            label: "Live";
             active: root.active-page == "live";
             clicked => { root.page-selected("live"); }
         }
 
-        // Spacer pushes settings to the bottom of the sidebar
         Rectangle { vertical-stretch: 1; }
 
-        // Separator before settings — visual grouping
-        Rectangle {
-            height: 1px;
-            background: #21262d;
-            horizontal-stretch: 1;
+        VerticalLayout {
+            padding-bottom: 8px;
+
+            Rectangle {
+                height: 1px;
+                horizontal-stretch: 1;
+                background: Theme.divider;
+            }
         }
 
-        // Settings pinned to bottom — separated from main nav
-        NavButton {
-            text: "settings";
+        NavItem {
+            icon: @image-url("../assets/settings.png");
+            label: "Settings";
             active: root.active-page == "settings";
             clicked => { root.page-selected("settings"); }
         }

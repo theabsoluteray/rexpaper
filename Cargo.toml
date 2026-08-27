@@ -19,7 +19,6 @@ raw-window-handle = "0.6"
 git2 = "0.20"
 rfd = "0.15"
 
-# Windows-only OS integration (SystemParametersInfoW, DWM backdrop)
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.61", features = [
     "Win32_Foundation",
@@ -27,8 +26,6 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Gdi",
     "Win32_UI_WindowsAndMessaging",
 ] }
-
-# Linux/Hyprland integration uses std::process::Command -- no extra deps.
 
 [build-dependencies]
 slint-build = "1.17"

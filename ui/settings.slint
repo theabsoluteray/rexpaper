@@ -1,100 +1,282 @@
-import { VerticalBox } from "std-widgets.slint";
-import { VerticalBox, HorizontalBox, Switch, ComboBox, GroupBox, LineEdit, Button } from "std-widgets.slint";
-import {AppStore} from "store.slint";
+import { AppStore, Theme } from "store.slint";
+
+component ToggleSwitch inherits Rectangle {
+    in-out property <bool> checked;
+    callback toggled(bool);
+
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: self.checked ? Theme.accent : (Theme.dark ? #3a3a3a : #d0d0d0);
+    animate background { duration: 0.12s; }
+
+    touch := TouchArea {
+        clicked => {
+            root.checked = !root.checked;
+            root.toggled(root.checked);
+        }
+        mouse-cursor: pointer;
+    }
+
+    Rectangle {
+        x: root.checked ? parent.width - 20px : 2px;
+        width: 18px;
+        height: 18px;
+        y: 2px;
+        border-radius: 9px;
+        background: root.checked ? (Theme.dark ? #000000 : #ffffff) : (Theme.dark ? #aaaaaa : #ffffff);
+        animate x { duration: 0.12s; }
+        animate background { duration: 0.12s; }
+    }
+
+    states [
+        hover when touch.has-hover: {
+            background: root.checked
+                ? (Theme.dark ? #e0e0e0 : #1a1a1a)
+                : (Theme.dark ? #4a4a4a : #c0c0c0);
+        }
+        pressed when touch.pressed: {
+            background: root.checked
+                ? (Theme.dark ? #d0d0d0 : #2a2a2a)
+                : (Theme.dark ? #555555 : #b0b0b0);
+        }
+    ]
+}
 
 export component SettingsPage inherits Rectangle {
-    background: #0d1117; // Match main window dark background
+    background: Theme.bg;
 
-    // --- Properties sent FROM Rust to Slint (to populate saved settings) ---
     in property <bool> run-on-startup: false;
     in property <bool> pause-on-fullscreen: true;
     in property <string> wallpaper-dir: "/home/user/wallpapers";
 
-    // --- Callbacks sent FROM Slint TO Rust (when user changes something) ---
     callback toggle-startup(bool);
     callback toggle-pause-fullscreen(bool);
     callback select-wallpaper-dir();
 
-    VerticalBox {
-        padding: 40px; // More generous padding for content breathing room
-        spacing: 28px; // Increased gap between sections
-        alignment: start;
+    VerticalLayout {
+        padding: 36px;
+        padding-top: 28px;
+        spacing: 24px;
 
-        // Page title — large and prominent
-        VerticalLayout {
-            spacing: 6px;
-            padding-bottom: 4px; // Small gap below title block
-
-            Text {
-                text: "Settings";
-                font-size: 28px;
-                font-weight: 800;
-                color: #e6edf3; // Primary light text
-            }
-
-            // Accent underline — adds a color accent below the title
-            Rectangle {
-                height: 3px;
-                width: 48px; // Short accent bar, not full width
-                background: #1f6feb; // Matches nav active accent
-                border-radius: 2px;
-            }
+        Text {
+            text: "Settings";
+            font-size: 24px;
+            font-weight: 700;
+            color: Theme.text;
         }
 
-        // --- SECTION 1: App & System Settings ---
-        GroupBox {
-            title: "General Behavior";
+        // Appearance
+        Rectangle {
+            horizontal-stretch: 1;
+            background: Theme.card;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: Theme.border;
 
-            VerticalBox {
-                spacing: 14px; // More space between toggle rows
+            VerticalLayout {
+                padding: 20px;
+                spacing: 16px;
 
-                Switch {
-                    text: "Run on System Startup";
-                    checked: root.run-on-startup;
-                    toggled => {
-                        root.toggle-startup(self.checked);
-                    }
-                }
-
-                Switch {
-                    text: "Pause Live Wallpapers on Fullscreen Games/Apps";
-                    checked: root.pause-on-fullscreen;
-                    toggled => {
-                        root.toggle-pause-fullscreen(self.checked);
-                    }
-                }
-            }
-        }
-
-        // --- SECTION 2: Directories ---
-        GroupBox {
-            title: "Wallpaper Storage";
-
-            VerticalBox {
-                spacing: 14px;
-
-                // Helper text explaining what this section does
                 Text {
-                    text: "Select a directory or add a git repository to download wallpapers from. The app will automatically scan for images.";
-                    color: #8b949e; // Muted secondary text
-                    wrap: word-wrap;
-                    font-size: 13px; // Slightly smaller for helper text
+                    text: "Appearance";
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: Theme.text;
                 }
 
-                HorizontalBox {
-                    spacing: 10px;
+                HorizontalLayout {
+                    spacing: 8px;
+                    height: 36px;
 
-                    // Read-only path display — shows current wallpaper directory
-                    LineEdit {
-                        text: root.wallpaper-dir;
-                        enabled: false;
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        border-radius: 6px;
+                        background: Theme.dark ? Theme.accent : Theme.card;
+                        border-width: 1px;
+                        border-color: Theme.border;
+
+                        animate background { duration: 0.12s; }
+                        animate border-color { duration: 0.12s; }
+
+                        Text {
+                            text: "Dark";
+                            font-size: 13px;
+                            font-weight: Theme.dark ? 600 : 400;
+                            color: Theme.dark ? #000000 : Theme.text-secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        touch-dark := TouchArea {
+                            clicked => { Theme.dark = true; }
+                        }
+
+                        states [
+                            hover when touch-dark.has-hover && !Theme.dark: {
+                                background: Theme.hover;
+                                border-color: Theme.hover;
+                            }
+                        ]
                     }
 
-                    // Browse button — triggers native file dialog via Rust
-                    Button {
-                        text: "Browse...";
-                        clicked => {
-                            AppStore.select-wallpaper-dir();
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        border-radius: 6px;
+                        background: !Theme.dark ? Theme.accent : Theme.card;
+                        border-width: 1px;
+                        border-color: Theme.border;
+
+                        animate background { duration: 0.12s; }
+                        animate border-color { duration: 0.12s; }
+
+                        Text {
+                            text: "Light";
+                            font-size: 13px;
+                            font-weight: !Theme.dark ? 600 : 400;
+                            color: !Theme.dark ? #ffffff : Theme.text-secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        touch-light := TouchArea {
+                            clicked => { Theme.dark = false; }
+                        }
+
+                        states [
+                            hover when touch-light.has-hover && Theme.dark: {
+                                background: Theme.hover;
+                                border-color: Theme.hover;
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        // General
+        Rectangle {
+            horizontal-stretch: 1;
+            background: Theme.card;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: Theme.border;
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 16px;
+
+                Text {
+                    text: "General";
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: Theme.text;
+                }
+
+                VerticalLayout {
+                    spacing: 8px;
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        ToggleSwitch {
+                            checked: root.run-on-startup;
+                            toggled => { root.toggle-startup(self.checked); }
+                        }
+
+                        Text {
+                            text: "Run on system startup";
+                            font-size: 13px;
+                            color: Theme.text;
+                            vertical-alignment: center;
+                            TouchArea {
+                                clicked => { root.toggle-startup(!root.run-on-startup); }
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        ToggleSwitch {
+                            checked: root.pause-on-fullscreen;
+                            toggled => { root.toggle-pause-fullscreen(self.checked); }
+                        }
+
+                        Text {
+                            text: "Pause on fullscreen apps";
+                            font-size: 13px;
+                            color: Theme.text;
+                            vertical-alignment: center;
+                            TouchArea {
+                                clicked => { root.toggle-pause-fullscreen(!root.pause-on-fullscreen); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Wallpaper Storage
+        Rectangle {
+            horizontal-stretch: 1;
+            background: Theme.card;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: Theme.border;
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 12px;
+
+                Text {
+                    text: "Wallpaper Storage";
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: Theme.text;
+                }
+
+                Text {
+                    text: "Choose a folder to scan for wallpapers, or add a git repository to download from.";
+                    font-size: 13px;
+                    color: Theme.text-secondary;
+                    wrap: word-wrap;
+                }
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    height: 36px;
+
+                    Rectangle {
+                        background: Theme.sunken;
+                        border-radius: 4px;
+
+                        Text {
+                            text: root.wallpaper-dir;
+                            font-size: 13px;
+                            color: Theme.text;
+                            vertical-alignment: center;
+                            x: 12px;
+                        }
+                    }
+
+                    Rectangle {
+                        background: Theme.accent;
+                        border-radius: 4px;
+                        horizontal-stretch: 0;
+                        min-width: 90px;
+
+                        Text {
+                            text: "Browse...";
+                            font-size: 13px;
+                            font-weight: 600;
+                            color: Theme.dark ? #000000 : #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        TouchArea {
+                            clicked => { AppStore.select-wallpaper-dir(); }
                         }
                     }
                 }

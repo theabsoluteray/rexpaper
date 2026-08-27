@@ -3,11 +3,9 @@ slint::include_modules!();
 fn main() -> Result<(), slint::PlatformError> {
     let main_window = MainWindow::new()?;
 
-    // 1. Set the default page
     main_window.set_active_page("static".into());
 
-    // THE STACK OVERFLOW FIX:
-    // Schedule the maximize command in the event loop instead of calling it directly
+    // Defer maximize to event loop
     let startup_window = main_window.as_weak();
     slint::invoke_from_event_loop(move || {
         if let Some(app) = startup_window.upgrade() {
@@ -15,7 +13,6 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     }).unwrap();
 
-    // 2. Handle Settings callbacks via AppStore
     let main_window_weak = main_window.as_weak();
     
     main_window.global::<AppStore>().on_select_wallpaper_dir(move || {
@@ -28,6 +25,5 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
-    // 3. Start the event loop (this will trigger the maximize command above)
     main_window.run()
 }

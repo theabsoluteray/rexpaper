@@ -2,38 +2,34 @@ import { NavBar } from "navbar.slint";
 import { SettingsPage } from "settings.slint";
 import { StaticPage } from "static.slint";
 import { LivePage } from "live.slint";
-import { AppStore } from "store.slint";
+import { AppStore, Theme } from "store.slint";
 
-export { AppStore }
+export { AppStore, Theme }
+
 
 export component MainWindow inherits Window {
     title: "RexPaper";
     icon: @image-url("../assets/logo.png");
 
-    min-height: 720px;
-    min-width: 1280px;
-    background: #0d1117; // Deep navy base for entire window
+    min-height: 600px;
+    min-width: 800px;
+    background: Theme.bg;
 
     in-out property <string> active-page: "static";
 
     HorizontalLayout {
 
-        // Left sidebar navigation — fixed 220px width
         NavBar {
             active-page: root.active-page;
-            page-selected(page-name) => {
-                root.active-page = page-name;
-            }
+            page-selected(name) => { root.active-page = name; }
         }
 
-        // Content area — stretches to fill remaining width
-        // Pages swap in/out based on active-page state
         VerticalLayout {
             horizontal-stretch: 1;
 
-            if root.active-page == "settings" : SettingsPage {}
             if root.active-page == "static" : StaticPage {}
             if root.active-page == "live" : LivePage {}
+            if root.active-page == "settings" : SettingsPage {}
         }
     }
 }
