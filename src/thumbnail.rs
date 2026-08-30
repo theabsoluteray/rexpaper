@@ -121,6 +121,7 @@ pub fn extract_video_thumbnail(video_path: &Path, cache_dir: &Path, out_path: &P
             &format!("--vo-image-outdir={}", temp_out_dir.to_string_lossy()),
             "--frames=1",
             "--start=0.5",
+            "--hwdec=auto-safe",
             "--really-quiet",
             &video_path.to_string_lossy(),
         ]);
