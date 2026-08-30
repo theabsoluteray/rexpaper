@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="RexPaper" Language="1033" Version="1.0.0" 
+  <Product Id="*" Name="RexPaper" Language="1033" Codepage="1252" Version="1.0.0" 
            Manufacturer="RexPaper" UpgradeCode="{7A3F2E8B-4C9D-4E1F-8B2A-5D6E7F8A9B0C}">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="x64"
+             SummaryCodepage="1252"
              Manufacturer="RexPaper" Description="RexPaper - Native Wallpaper Manager for Windows" 
              Comments="Fast, native wallpaper manager with mpv live wallpapers" />
 
