@@ -5,7 +5,8 @@
 *.bak
 *.tmp
 
-# IDE / Editor
+# IDE / Editor / Agents
+.agents/
 .vscode/
 .idea/
 *.sublime-*
