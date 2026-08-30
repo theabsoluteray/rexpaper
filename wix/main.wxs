@@ -36,23 +36,23 @@
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Id="MainExecutable" Guid="{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}" Win64="yes">
-        <File Id="rexpaper.exe" Source="$(var.ProjectDir)\target\release\rexpaper.exe" KeyPath="yes" />
+        <File Id="rexpaper.exe" Source="target\release\rexpaper.exe" KeyPath="yes" />
       </Component>
 
       <Component Id="LibMpv2Dll" Guid="{B2C3D4E5-F6A7-8901-BCDE-F12345678901}" Win64="yes">
-        <File Id="libmpv_2_dll" Source="$(var.ProjectDir)\target\release\libmpv-2.dll" KeyPath="yes" />
+        <File Id="libmpv_2_dll" Source="target\release\libmpv-2.dll" KeyPath="yes" />
       </Component>
 
       <Component Id="MpvDll" Guid="{B3C4D5E6-F7A8-9012-BCDE-F12345678902}" Win64="yes">
-        <File Id="mpv_dll" Source="$(var.ProjectDir)\target\release\mpv.dll" KeyPath="yes" />
+        <File Id="mpv_dll" Source="target\release\mpv.dll" KeyPath="yes" />
       </Component>
 
       <Component Id="MpvExe" Guid="{C3D4E5F6-A7B8-9012-CDEF-123456789012}" Win64="yes">
-        <File Id="mpv_exe" Source="$(var.ProjectDir)\target\release\mpv.exe" KeyPath="yes" />
+        <File Id="mpv_exe" Source="target\release\mpv.exe" KeyPath="yes" />
       </Component>
 
       <Component Id="MpvCom" Guid="{D4E5F6A7-B8C9-0123-DEFA-234567890123}" Win64="yes">
-        <File Id="mpv_com" Source="$(var.ProjectDir)\target\release\mpv.com" KeyPath="yes" />
+        <File Id="mpv_com" Source="target\release\mpv.com" KeyPath="yes" />
       </Component>
     </ComponentGroup>
   </Fragment>
