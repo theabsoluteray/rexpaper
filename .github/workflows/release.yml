@@ -55,7 +55,7 @@ jobs:
           $outputPath = "mpv.7z"
           curl.exe -L -o $outputPath $mpvUrl
           if (-not ((Get-Item $outputPath).Length -gt 1000000)) { throw "Runtime package download too small" }
-          7z x $outputPath -o./mpv-runtime -y
+          7z x $outputPath "-ompv-runtime" -y
 
           New-Item -ItemType Directory -Path ./mpv -Force | Out-Null
           if (Test-Path ./mpv-runtime/mpv.exe)  { Copy-Item ./mpv-runtime/mpv.exe  ./mpv/ -Force }
@@ -79,7 +79,7 @@ jobs:
           $devPath = "mpv-dev.7z"
           curl.exe -L -o $devPath $devUrl
           if (-not ((Get-Item $devPath).Length -gt 1000000)) { throw "Dev package download too small" }
-          7z x $devPath -o./mpv-dev -y
+          7z x $devPath "-ompv-dev" -y
           $libDir = "./mpv-lib"
           if (-not (Test-Path $libDir)) { New-Item -ItemType Directory -Path $libDir | Out-Null }
 
