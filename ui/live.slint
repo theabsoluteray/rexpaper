@@ -2,7 +2,7 @@ import { Theme, WallpaperData, AppStore } from "store.slint";
 import { ComboBox, LineEdit } from "std-widgets.slint";
 
 export global LiveConstants {
-    in-out property <length> thumb-height: 185px;
+    in-out property <length> thumb-height: 155px;
     in-out property <length> grid-gap: 14px;
 }
 
@@ -22,57 +22,19 @@ component LiveWallpaperItem inherits Rectangle {
     animate border-width { duration: 180ms; easing: ease-out; }
     animate background { duration: 180ms; easing: ease-out; }
 
-    VerticalLayout {
-        padding: 0;
-        spacing: 0;
+    Image {
+        source: wallpaper.thumb;
+        width: 100%;
+        height: 100%;
+        image-fit: cover;
+    }
 
-        Rectangle {
-            vertical-stretch: 1;
-            clip: true;
-
-            Image {
-                source: wallpaper.thumb;
-                width: 100%;
-                height: 100%;
-                image-fit: cover;
-            }
-
-            // Subtle sheen overlay on hover
-            Rectangle {
-                width: 100%;
-                height: 100%;
-                background: touch.has-hover ? #ffffff18 : transparent;
-                animate background { duration: 180ms; easing: ease-out; }
-            }
-        }
-
-        Rectangle {
-            height: 1px;
-            background: Theme.border;
-        }
-
-        // Card footer bar
-        Rectangle {
-            height: 34px;
-            background: touch.has-hover ? (Theme.dark ? #222430 : #f0f2f8) : Theme.sunken;
-            animate background { duration: 180ms; easing: ease-out; }
-
-            HorizontalLayout {
-                padding-left: 12px;
-                padding-right: 12px;
-                alignment: start;
-
-                Text {
-                    text: wallpaper.name;
-                    font-size: 12px;
-                    font-weight: 600;
-                    color: touch.has-hover ? Theme.accent : Theme.text;
-                    vertical-alignment: center;
-                    overflow: elide;
-                    animate color { duration: 180ms; easing: ease-out; }
-                }
-            }
-        }
+    // Subtle sheen overlay on hover
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: touch.has-hover ? #ffffff18 : transparent;
+        animate background { duration: 180ms; easing: ease-out; }
     }
 
     touch := TouchArea {
