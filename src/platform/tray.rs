@@ -73,9 +73,20 @@ where
                 ..Default::default()
             };
 
-            // Load application icon or default
-            let icon = LoadIconW(Some(hinstance.into()), IDI_APPLICATION).unwrap_or_else(|_| {
-                LoadIconW(None, IDI_APPLICATION).unwrap_or_default()
+            // Load embedded application logo icon (Resource ID 1 from winres) at exact small icon resolution
+            let icon = LoadImageW(
+                Some(hinstance.into()),
+                windows::core::PCWSTR(1 as _),
+                IMAGE_ICON,
+                GetSystemMetrics(SM_CXSMICON),
+                GetSystemMetrics(SM_CYSMICON),
+                LR_DEFAULTCOLOR,
+            )
+            .map(|h| HICON(h.0))
+            .unwrap_or_else(|_| {
+                LoadIconW(Some(hinstance.into()), windows::core::PCWSTR(1 as _)).unwrap_or_else(|_| {
+                    LoadIconW(None, IDI_APPLICATION).unwrap_or_default()
+                })
             });
             nid.hIcon = icon;
 
