@@ -1,0 +1,162 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: x86_64-pc-windows-msvc
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install WiX Toolset
+        run: |
+          choco install wixtoolset --version 3.11.2 --no-progress
+          refreshenv
+
+      - name: Download mpv Windows runtime
+        run: |
+          $rss = [xml](Invoke-WebRequest -Uri "https://sourceforge.net/projects/mpv-player-windows/rss?path=/" -UseBasicParsing).Content
+          $item = $null
+          foreach ($node in $rss.SelectNodes("//*[local-name()='item']")) {
+            $title = $node.SelectSingleNode("*[local-name()='title']").InnerText
+            if ($title -match '/64bit/mpv-x86_64-.*\.7z' -and $title -notmatch '-v3-') {
+              $item = $node
+              break
+            }
+          }
+          if (-not $item) { throw "No non-v3 x86_64 mpv runtime package found in RSS feed" }
+          $mpvUrl = $item.SelectSingleNode("*[local-name()='link']").InnerText
+          Write-Host "Using runtime package: $mpvUrl"
+          $outputPath = "mpv.7z"
+          curl.exe -L -o $outputPath $mpvUrl
+          if (-not ((Get-Item $outputPath).Length -gt 1000000)) { throw "Runtime package download too small" }
+          7z x $outputPath -o./mpv-runtime -y
+
+          New-Item -ItemType Directory -Path ./mpv -Force | Out-Null
+          if (Test-Path ./mpv-runtime/mpv.exe)  { Copy-Item ./mpv-runtime/mpv.exe  ./mpv/ -Force }
+          if (Test-Path ./mpv-runtime/mpv.com)  { Copy-Item ./mpv-runtime/mpv.com  ./mpv/ -Force }
+          ls ./mpv/
+
+      - name: Prepare mpv dev lib for linking
+        run: |
+          $rss = [xml](Invoke-WebRequest -Uri "https://sourceforge.net/projects/mpv-player-windows/rss?path=/libmpv" -UseBasicParsing).Content
+          $item = $null
+          foreach ($node in $rss.SelectNodes("//*[local-name()='item']")) {
+            $title = $node.SelectSingleNode("*[local-name()='title']").InnerText
+            if ($title -match 'mpv-dev-x86_64-.*\.7z' -and $title -notmatch '-v3-') {
+              $item = $node
+              break
+            }
+          }
+          if (-not $item) { throw "No non-v3 x86_64 mpv dev package found in RSS feed" }
+          $devUrl = $item.SelectSingleNode("*[local-name()='link']").InnerText
+          Write-Host "Using dev package: $devUrl"
+          $devPath = "mpv-dev.7z"
+          curl.exe -L -o $devPath $devUrl
+          if (-not ((Get-Item $devPath).Length -gt 1000000)) { throw "Dev package download too small" }
+          7z x $devPath -o./mpv-dev -y
+          $libDir = "./mpv-lib"
+          if (-not (Test-Path $libDir)) { New-Item -ItemType Directory -Path $libDir | Out-Null }
+
+          $dll = Get-ChildItem -Path ./mpv-dev -Recurse -Filter "libmpv-2.dll" | Select-Object -First 1
+          if (-not $dll) { throw "libmpv-2.dll not found in dev package" }
+
+          New-Item -ItemType Directory -Path ./mpv -Force | Out-Null
+          Copy-Item $dll.FullName ./mpv/libmpv-2.dll -Force
+
+          $dumpbin = Get-ChildItem "C:\Program Files*\Microsoft Visual Studio\*\*\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $dumpbin) { throw "MSVC dumpbin.exe not found" }
+          $defPath = "$libDir\mpv.def"
+          $defLines = "EXPORTS"
+          foreach ($line in (& $dumpbin.FullName /exports $dll.FullName)) {
+            if ($line -match '^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+(\S+)$') {
+              $name = $Matches[1]
+              if ($name -like 'mpv_*') { $defLines += "`r`n    $name" }
+            }
+          }
+          Set-Content -Path $defPath -Value $defLines -NoNewline
+
+          $libExe = Get-ChildItem "C:\Program Files*\Microsoft Visual Studio\*\*\VC\Tools\MSVC\*\bin\Hostx64\x64\lib.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $libExe) { throw "MSVC lib.exe not found" }
+          & $libExe.FullName "/def:$defPath" "/name:libmpv-2.dll" "/out:$libDir\mpv.lib" "/MACHINE:X64" 2>&1 | Out-Host
+          if (-not (Test-Path "$libDir\mpv.lib")) { throw "mpv.lib generation failed" }
+          ls $libDir
+
+      - name: Build release
+        run: cargo build --release
+        env:
+          MPV_LIB_DIR: ./mpv-lib
+
+      - name: Stage release dependencies
+        run: |
+          Copy-Item ./mpv/mpv.exe target/release/ -Force
+          Copy-Item ./mpv/libmpv-2.dll target/release/ -Force
+          Copy-Item ./mpv/libmpv-2.dll target/release/mpv.dll -Force
+          Copy-Item ./mpv/mpv.com target/release/ -Force -ErrorAction SilentlyContinue
+          ls target/release/
+
+      - name: Build MSI with WiX
+        run: |
+          $projectDir = (Resolve-Path .).Path
+          $wixDir = "$projectDir\wix"
+          New-Item -ItemType Directory -Path "$wixDir\obj" -Force | Out-Null
+          
+          candle.exe -out "$wixDir\obj\main.wixobj" `
+            -dProjectDir=$projectDir `
+            "$wixDir\main.wxs"
+          
+          light.exe -out "$projectDir\RexPaper-1.0.0-x64.msi" `
+            "$wixDir\obj\main.wixobj" `
+            -ext WixUIExtension `
+            -cultures:en-us
+
+      - name: Create Portable Zip Package
+        run: |
+          $portableDir = "RexPaper-Portable-x64"
+          New-Item -ItemType Directory -Path $portableDir -Force | Out-Null
+          Copy-Item target/release/rexpaper.exe $portableDir/
+          Copy-Item target/release/libmpv-2.dll $portableDir/
+          Copy-Item target/release/mpv.dll $portableDir/
+          Copy-Item target/release/mpv.exe $portableDir/
+          Copy-Item target/release/mpv.com $portableDir/ -ErrorAction SilentlyContinue
+          Copy-Item -Recurse assets $portableDir/
+          Copy-Item README.md $portableDir/
+          Copy-Item LICENSE $portableDir/
+          Compress-Archive -Path "$portableDir\*" -DestinationPath "RexPaper-1.0.0-Portable-x64.zip" -Force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            RexPaper-1.0.0-x64.msi
+            RexPaper-1.0.0-Portable-x64.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

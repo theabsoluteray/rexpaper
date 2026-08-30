@@ -1,51 +1,250 @@
-import { Theme } from "store.slint";
+import { Theme, WallpaperData, AppStore } from "store.slint";
+import { ComboBox, LineEdit } from "std-widgets.slint";
+
+export global LiveConstants {
+    in-out property <length> thumb-height: 185px;
+    in-out property <length> grid-gap: 14px;
+}
+
+component LiveWallpaperItem inherits Rectangle {
+    in property <WallpaperData> wallpaper;
+
+    horizontal-stretch: 1;
+    min-width: 0px;
+    preferred-width: 200px;
+    height: LiveConstants.thumb-height;
+    background: Theme.sunken;
+    border-radius: 8px;
+    border-width: touch.has-hover ? 2px : 1px;
+    border-color: touch.has-hover ? Theme.accent : Theme.border;
+    clip: true;
+    animate border-color { duration: 180ms; easing: ease-out; }
+    animate border-width { duration: 180ms; easing: ease-out; }
+    animate background { duration: 180ms; easing: ease-out; }
+
+    VerticalLayout {
+        padding: 0;
+        spacing: 0;
+
+        Rectangle {
+            vertical-stretch: 1;
+            clip: true;
+
+            Image {
+                source: wallpaper.thumb;
+                width: 100%;
+                height: 100%;
+                image-fit: cover;
+            }
+
+            // Subtle sheen overlay on hover
+            Rectangle {
+                width: 100%;
+                height: 100%;
+                background: touch.has-hover ? #ffffff18 : transparent;
+                animate background { duration: 180ms; easing: ease-out; }
+            }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: Theme.border;
+        }
+
+        // Card footer bar
+        Rectangle {
+            height: 34px;
+            background: touch.has-hover ? (Theme.dark ? #222430 : #f0f2f8) : Theme.sunken;
+            animate background { duration: 180ms; easing: ease-out; }
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                alignment: start;
+
+                Text {
+                    text: wallpaper.name;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: touch.has-hover ? Theme.accent : Theme.text;
+                    vertical-alignment: center;
+                    overflow: elide;
+                    animate color { duration: 180ms; easing: ease-out; }
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        clicked => { 
+            AppStore.apply-live-wallpaper(wallpaper.path);
+        }
+        mouse-cursor: pointer;
+    }
+
+    states [
+        pressed when touch.pressed: {
+            background: Theme.pressed;
+        }
+    ]
+}
 
 export component LivePage inherits Rectangle {
     background: Theme.bg;
 
     VerticalLayout {
-        padding: 36px;
-        padding-top: 28px;
-        spacing: 20px;
+        padding: 24px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        spacing: 14px;
 
-        Text {
-            text: "Live Wallpapers";
-            font-size: 24px;
-            font-weight: 700;
-            color: Theme.text;
+        // Header - strictly fixed height
+        VerticalLayout {
+            vertical-stretch: 0;
+            spacing: 3px;
+
+            Text {
+                text: "Live Wallpapers";
+                font-size: 24px;
+                font-weight: 800;
+                color: Theme.text;
+            }
+
+            Text {
+                text: "Click any video wallpaper to apply it as your desktop background";
+                font-size: 13px;
+                color: Theme.text-secondary;
+            }
         }
 
-        Text {
-            text: "Your animated wallpaper collection";
-            font-size: 13px;
-            color: Theme.text-secondary;
-        }
-
+        // Filter / Controls bar - strictly fixed height with pixel-perfect vertical centering
         Rectangle {
-            vertical-stretch: 1;
-            horizontal-stretch: 1;
+            vertical-stretch: 0;
+            height: 50px;
             background: Theme.card;
             border-radius: 8px;
             border-width: 1px;
             border-color: Theme.border;
 
-            VerticalLayout {
-                alignment: center;
-                spacing: 8px;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                alignment: space-between;
 
-                Text {
-                    text: "No live wallpapers yet";
-                    font-size: 15px;
-                    font-weight: 500;
-                    color: Theme.text-secondary;
-                    horizontal-alignment: center;
+                // Left: Category
+                HorizontalLayout {
+                    spacing: 10px;
+                    alignment: start;
+                    height: 34px;
+                    y: (parent.height - self.height) / 2;
+
+                    Text {
+                        text: "Category:";
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: Theme.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    ComboBox {
+                        width: 180px;
+                        height: 34px;
+                        model: AppStore.live-categories;
+                        current-value: AppStore.active-live-category;
+                        selected(val) => {
+                            AppStore.set-active-live-category(val);
+                        }
+                    }
                 }
 
-                Text {
-                    text: "Add a folder in Settings to get started";
-                    font-size: 12px;
-                    color: Theme.text-muted;
-                    horizontal-alignment: center;
+                // Right: Search Filter
+                HorizontalLayout {
+                    spacing: 10px;
+                    alignment: end;
+                    height: 34px;
+                    y: (parent.height - self.height) / 2;
+
+                    Text {
+                        text: "Filter:";
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: Theme.text-secondary;
+                        vertical-alignment: center;
+                    }
+
+                    LineEdit {
+                        width: 220px;
+                        height: 34px;
+                        placeholder-text: "Search by name...";
+                        text: AppStore.live-search-query;
+                        edited(text) => {
+                            AppStore.filter-live-search(text);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Grid Container - takes ALL remaining vertical space
+        Rectangle {
+            vertical-stretch: 1;
+            horizontal-stretch: 1;
+            background: Theme.card;
+            border-radius: 10px;
+            border-width: 1px;
+            border-color: Theme.border;
+            clip: true;
+
+            if AppStore.live-rows.length == 0 : Text {
+                text: "No live wallpapers found.\nChoose a directory in Settings or adjust your filter.";
+                color: Theme.text-muted;
+                font-size: 14px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+                width: 100%;
+                height: 100%;
+            }
+
+            Flickable {
+                vertical-stretch: 1;
+                horizontal-stretch: 1;
+                viewport-width: self.width;
+                viewport-height: (AppStore.live-rows.length * (LiveConstants.thumb-height + LiveConstants.grid-gap)) + LiveConstants.grid-gap + 32px;
+
+                VerticalLayout {
+                    width: parent.width;
+                    padding: 16px;
+                    spacing: LiveConstants.grid-gap;
+                    alignment: start;
+
+                    for row in AppStore.live-rows : HorizontalLayout {
+                        height: LiveConstants.thumb-height;
+                        spacing: LiveConstants.grid-gap;
+
+                        for wallpaper in row.items : LiveWallpaperItem {
+                            wallpaper: wallpaper;
+                        }
+
+                        // Equal-weight spacers ensure rows with 1, 2, or 3 items lock to columns 1, 2, 3
+                        if row.items.length < 4 : Rectangle {
+                            horizontal-stretch: 1;
+                            min-width: 0px;
+                            preferred-width: 200px;
+                            opacity: 0;
+                        }
+                        if row.items.length < 3 : Rectangle {
+                            horizontal-stretch: 1;
+                            min-width: 0px;
+                            preferred-width: 200px;
+                            opacity: 0;
+                        }
+                        if row.items.length < 2 : Rectangle {
+                            horizontal-stretch: 1;
+                            min-width: 0px;
+                            preferred-width: 200px;
+                            opacity: 0;
+                        }
+                    }
                 }
             }
         }

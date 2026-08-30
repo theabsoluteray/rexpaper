@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="RexPaper" Language="1033" Version="1.0.0" 
+           Manufacturer="RexPaper" UpgradeCode="{7A3F2E8B-4C9D-4E1F-8B2A-5D6E7F8A9B0C}">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Platform="x64"
+             Manufacturer="RexPaper" Description="RexPaper - Native Wallpaper Manager for Windows" 
+             Comments="Fast, native wallpaper manager with mpv live wallpapers" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of RexPaper is already installed." 
+                  Schedule="afterInstallInitialize" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="MainApplication" Title="RexPaper" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="ApplicationShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="UninstallShortcut" />
+    </Feature>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_Minimal" />
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="RexPaper" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="RexPaper" />
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="MainExecutable" Guid="{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}" Win64="yes">
+        <File Id="rexpaper.exe" Source="$(var.ProjectDir)\target\release\rexpaper.exe" KeyPath="yes" />
+      </Component>
+
+      <Component Id="LibMpv2Dll" Guid="{B2C3D4E5-F6A7-8901-BCDE-F12345678901}" Win64="yes">
+        <File Id="libmpv_2_dll" Source="$(var.ProjectDir)\target\release\libmpv-2.dll" KeyPath="yes" />
+      </Component>
+
+      <Component Id="MpvDll" Guid="{B3C4D5E6-F7A8-9012-BCDE-F12345678902}" Win64="yes">
+        <File Id="mpv_dll" Source="$(var.ProjectDir)\target\release\mpv.dll" KeyPath="yes" />
+      </Component>
+
+      <Component Id="MpvExe" Guid="{C3D4E5F6-A7B8-9012-CDEF-123456789012}" Win64="yes">
+        <File Id="mpv_exe" Source="$(var.ProjectDir)\target\release\mpv.exe" KeyPath="yes" />
+      </Component>
+
+      <Component Id="MpvCom" Guid="{D4E5F6A7-B8C9-0123-DEFA-234567890123}" Win64="yes">
+        <File Id="mpv_com" Source="$(var.ProjectDir)\target\release\mpv.com" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="ApplicationShortcut" Directory="ApplicationProgramsFolder">
+      <Shortcut Id="AppShortcut" Name="RexPaper" Target="[INSTALLFOLDER]rexpaper.exe" 
+                WorkingDirectory="INSTALLFOLDER" Description="RexPaper Wallpaper Manager" />
+      <RemoveFolder Id="RemoveAppFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\RexPaper" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Component Id="DesktopShortcut" Directory="DesktopFolder">
+      <Shortcut Id="AppDesktopShortcut" Name="RexPaper" Target="[INSTALLFOLDER]rexpaper.exe" 
+                WorkingDirectory="INSTALLFOLDER" Description="RexPaper Wallpaper Manager" />
+      <RegistryValue Root="HKCU" Key="Software\RexPaper" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <Component Id="UninstallShortcut" Directory="ApplicationProgramsFolder" Guid="{E5F6A7B8-C9D0-1234-EFAB-345678901234}">
+      <Shortcut Id="UninstallShortcut" Name="Uninstall RexPaper" 
+                Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode]" 
+                Description="Uninstall RexPaper" />
+      <RemoveFolder Id="RemoveUninstallFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\RexPaper" Name="UninstallShortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <Property Id="ARPCOMMENTS">Fast, native wallpaper manager with mpv live wallpapers</Property>
+    <Property Id="ARPCONTACT">RexPaper</Property>
+    <Property Id="ARPURLINFOABOUT">https://github.com/theabsoluteray/rexpaper</Property>
+    <Property Id="ARPNOREPAIR" Value="yes" />
+    <Property Id="ARPNOmodify" Value="yes" />
+  </Fragment>
+</Wix>

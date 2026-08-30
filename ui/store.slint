@@ -1,43 +1,86 @@
 export struct WallpaperData {
-    path: string,
+    name: string,
+    thumb: image,
     category: string,
+    is-live: bool,
+    path: string,
+}
+
+export struct RowData {
+    items: [WallpaperData],
 }
 
 export global AppStore {
     in-out property <string> wallpaper-dir: "No folder selected";
+    in-out property <string> live-wallpaper-dir: "No folder selected";
 
     in-out property <[WallpaperData]> static-wallpapers: [];
     in-out property <[WallpaperData]> live-wallpapers: [];
 
-    in-out property <[string]> categories: ["Root"];
+    in-out property <[WallpaperData]> filtered-static-wallpapers: [];
+    in-out property <[WallpaperData]> filtered-live-wallpapers: [];
 
-    in-out property <string> active-category: "Root";
+    in-out property <[RowData]> static-rows: [];
+    in-out property <[RowData]> live-rows: [];
+
+    in-out property <int> grid-columns: 4;
+
+    in-out property <[string]> categories: ["All"];
+    in-out property <[string]> live-categories: ["All"];
+
+    in-out property <string> active-category: "All";
+    in-out property <string> active-live-category: "All";
+
+    in-out property <string> static-search-query: "";
+    in-out property <string> live-search-query: "";
+
+    in-out property <bool> run-on-startup: false;
+    in-out property <bool> pause-on-fullscreen: true;
+    in-out property <bool> mute-live-wallpapers: true;
+    in-out property <bool> live-wallpaper-active: false;
+
+    in-out property <bool> live-preview-visible: false;
+    in-out property <string> live-preview-path: "";
+    in-out property <image> live-preview-frame;
 
     callback select-wallpaper-dir();
+    callback select-live-wallpaper-dir();
+    callback set-active-category(string);
+    callback set-active-live-category(string);
+    callback filter-static-search(string);
+    callback filter-live-search(string);
+    callback play-live-wallpaper(string);
+    callback stop-live-wallpaper();
+    callback apply-live-wallpaper(string);
+    callback stop-desktop-live-wallpaper();
+    callback apply-static-wallpaper(string);
+    callback toggle-startup(bool);
+    callback toggle-pause-fullscreen(bool);
+    callback toggle-mute-live(bool);
 }
 
 export global Theme {
     in-out property <bool> dark: true;
 
-    in-out property <color> bg: root.dark ? #000000 : #ffffff;
-    in-out property <color> sidebar: root.dark ? #0a0a0a : #f2f2f2;
-    in-out property <color> card: root.dark ? #141414 : #ffffff;
-    in-out property <color> card-hover: root.dark ? #1e1e1e : #f2f2f2;
-    in-out property <color> sunken: root.dark ? #0a0a0a : #e5e5e5;
+    in-out property <color> bg: root.dark ? #0b0c10 : #f5f5f7;
+    in-out property <color> sidebar: root.dark ? #111217 : #ffffff;
+    in-out property <color> card: root.dark ? #16171f : #ffffff;
+    in-out property <color> card-hover: root.dark ? #1f202b : #f0f0f5;
+    in-out property <color> sunken: root.dark ? #101116 : #e8e8ed;
 
-    in-out property <color> text: root.dark ? #ffffff : #000000;
-    in-out property <color> text-secondary: root.dark ? #bbbbbb : #333333;
-    in-out property <color> text-muted: root.dark ? #888888 : #777777;
+    in-out property <color> text: root.dark ? #ffffff : #111116;
+    in-out property <color> text-secondary: root.dark ? #9496a8 : #555770;
+    in-out property <color> text-muted: root.dark ? #65677a : #8c8ea0;
 
     in-out property <color> accent: root.dark ? #ffffff : #000000;
     in-out property <color> accent-soft: root.dark ? #ffffff22 : #00000022;
 
-    in-out property <color> border: root.dark ? #2a2a2a : #cccccc;
-    in-out property <color> divider: root.dark ? #1e1e1e : #d9d9d9;
+    in-out property <color> border: root.dark ? #232430 : #d8d8e2;
+    in-out property <color> divider: root.dark ? #1a1b24 : #e2e2ec;
 
-    in-out property <color> hover: root.dark ? #1e1e1e : #e8e8e8;
-    in-out property <color> pressed: root.dark ? #2a2a2a : #d0d0d0;
+    in-out property <color> hover: root.dark ? #1c1d26 : #eaeaf2;
+    in-out property <color> pressed: root.dark ? #262734 : #dcdce8;
 
-    in-out property <color> nav-active: root.dark ? #ffffff22 : #00000018;
+    in-out property <color> nav-active: root.dark ? #ffffff1e : #00000018;
     in-out property <color> nav-active-accent: root.dark ? #ffffff : #000000;
 }

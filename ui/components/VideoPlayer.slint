@@ -1,0 +1,30 @@
+import { Theme } from "../store.slint";
+
+export component VideoPlayer inherits Rectangle {
+    in property <image> frame;
+    in property <bool> playing: true;
+
+    background: #000000;
+    border-radius: 8px;
+
+    Image {
+        source: frame;
+        width: parent.width;
+        height: parent.height;
+    }
+
+    if !playing : Rectangle {
+        background: #000000aa;
+        width: parent.width;
+        height: parent.height;
+        border-radius: 8px;
+
+        Text {
+            text: "Click a video to preview";
+            font-size: 16px;
+            color: #ffffff;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+}

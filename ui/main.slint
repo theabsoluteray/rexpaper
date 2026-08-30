@@ -6,30 +6,74 @@ import { AppStore, Theme } from "store.slint";
 
 export { AppStore, Theme }
 
-
 export component MainWindow inherits Window {
     title: "RexPaper";
-    icon: @image-url("../assets/logo.png");
+    icon: @image-url("../assets/logo.svg");
 
-    min-height: 600px;
-    min-width: 800px;
+    min-height: 640px;
+    min-width: 900px;
+    preferred-width: 1200px;
+    preferred-height: 800px;
     background: Theme.bg;
+    animate background { duration: 200ms; easing: ease-out; }
 
     in-out property <string> active-page: "static";
 
     HorizontalLayout {
+        spacing: 0;
+        padding: 0;
 
         NavBar {
+            width: 230px;
             active-page: root.active-page;
             page-selected(name) => { root.active-page = name; }
         }
 
-        VerticalLayout {
+        Rectangle {
             horizontal-stretch: 1;
+            clip: true;
 
-            if root.active-page == "static" : StaticPage {}
-            if root.active-page == "live" : LivePage {}
-            if root.active-page == "settings" : SettingsPage {}
+            // Static Page
+            Rectangle {
+                width: parent.width;
+                height: parent.height;
+                opacity: root.active-page == "static" ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                animate opacity { duration: 180ms; easing: ease-out; }
+
+                StaticPage {
+                    width: parent.width;
+                    height: parent.height;
+                }
+            }
+
+            // Live Page
+            Rectangle {
+                width: parent.width;
+                height: parent.height;
+                opacity: root.active-page == "live" ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                animate opacity { duration: 180ms; easing: ease-out; }
+
+                LivePage {
+                    width: parent.width;
+                    height: parent.height;
+                }
+            }
+
+            // Settings Page
+            Rectangle {
+                width: parent.width;
+                height: parent.height;
+                opacity: root.active-page == "settings" ? 1.0 : 0.0;
+                visible: self.opacity > 0.01;
+                animate opacity { duration: 180ms; easing: ease-out; }
+
+                SettingsPage {
+                    width: parent.width;
+                    height: parent.height;
+                }
+            }
         }
     }
 }

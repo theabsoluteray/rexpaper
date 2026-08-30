@@ -1,10 +1,12 @@
-﻿[package]
+[package]
 name = "rexpaper"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
-description = "A fast, native wallpaper manager for Windows and Hyprland, built with Rust + Slint"
+description = "A fast, native wallpaper manager for Windows with mpv live wallpapers, built with Rust + Slint"
 license = "GPL-3.0"
 repository = "https://github.com/theabsoluteray/rexpaper"
+categories = ["desktop-environment", "multimedia", "gui"]
+keywords = ["wallpaper", "live-wallpaper", "mpv", "slint"]
 
 [dependencies]
 slint = { version = "1.17", features = ["raw-window-handle-06"] }
@@ -16,8 +18,10 @@ serde_json = "1.0"
 dirs = "5.0"
 thiserror = "2.0"
 raw-window-handle = "0.6"
-git2 = "0.20"
 rfd = "0.15"
+libmpv = { version = "2", features = ["render"] }
+directories = "5.0"
+which = "6.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.61", features = [
@@ -25,12 +29,18 @@ windows = { version = "0.61", features = [
     "Win32_Graphics_Dwm",
     "Win32_Graphics_Gdi",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Shell",
+    "Win32_UI_HiDpi",
+    "Win32_System_Registry",
+    "Win32_System_LibraryLoader",
 ] }
 
 [build-dependencies]
 slint-build = "1.17"
 rfd = "0.15"
+
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
+strip = true

@@ -20,3 +20,18 @@ desktop.ini
 test_*.rs
 *.log
 /target
+
+# Locally generated mpv import library (mpv.lib) and download staging
+/mpv-lib
+/mpv-dev.7z
+/mpv.7z
+/mpv-dev/
+/mpv-runtime/
+/mpv/
+/mpv-staging/
+
+# WiX build outputs
+/wix/obj/
+*.wixobj
+*.wixpdb
+*.msi

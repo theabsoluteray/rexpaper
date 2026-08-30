@@ -1,14 +1,15 @@
 import { AppStore, Theme } from "store.slint";
+import { ScrollView } from "std-widgets.slint";
 
 component ToggleSwitch inherits Rectangle {
     in-out property <bool> checked;
     callback toggled(bool);
 
-    width: 40px;
-    height: 22px;
-    border-radius: 11px;
-    background: self.checked ? Theme.accent : (Theme.dark ? #3a3a3a : #d0d0d0);
-    animate background { duration: 0.12s; }
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: self.checked ? Theme.accent : (Theme.dark ? #323340 : #d0d0d8);
+    animate background { duration: 0.15s; }
 
     touch := TouchArea {
         clicked => {
@@ -19,26 +20,21 @@ component ToggleSwitch inherits Rectangle {
     }
 
     Rectangle {
-        x: root.checked ? parent.width - 20px : 2px;
-        width: 18px;
-        height: 18px;
+        x: root.checked ? parent.width - 22px : 2px;
+        width: 20px;
+        height: 20px;
         y: 2px;
-        border-radius: 9px;
+        border-radius: 10px;
         background: root.checked ? (Theme.dark ? #000000 : #ffffff) : (Theme.dark ? #aaaaaa : #ffffff);
-        animate x { duration: 0.12s; }
-        animate background { duration: 0.12s; }
+        animate x { duration: 0.15s; }
+        animate background { duration: 0.15s; }
     }
 
     states [
         hover when touch.has-hover: {
             background: root.checked
-                ? (Theme.dark ? #e0e0e0 : #1a1a1a)
-                : (Theme.dark ? #4a4a4a : #c0c0c0);
-        }
-        pressed when touch.pressed: {
-            background: root.checked
-                ? (Theme.dark ? #d0d0d0 : #2a2a2a)
-                : (Theme.dark ? #555555 : #b0b0b0);
+                ? (Theme.dark ? #f0f0f5 : #1a1a1a)
+                : (Theme.dark ? #424354 : #c0c0c8);
         }
     ]
 }
@@ -46,237 +42,329 @@ component ToggleSwitch inherits Rectangle {
 export component SettingsPage inherits Rectangle {
     background: Theme.bg;
 
-    in property <bool> run-on-startup: false;
-    in property <bool> pause-on-fullscreen: true;
-    in property <string> wallpaper-dir: "/home/user/wallpapers";
-
-    callback toggle-startup(bool);
-    callback toggle-pause-fullscreen(bool);
-    callback select-wallpaper-dir();
+    in property <bool> run-on-startup: AppStore.run-on-startup;
+    in property <bool> pause-on-fullscreen: AppStore.pause-on-fullscreen;
+    in property <bool> mute-live-wallpapers: AppStore.mute-live-wallpapers;
 
     VerticalLayout {
-        padding: 36px;
-        padding-top: 28px;
-        spacing: 24px;
+        padding: 24px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        spacing: 16px;
 
-        Text {
-            text: "Settings";
-            font-size: 24px;
-            font-weight: 700;
-            color: Theme.text;
-        }
+        // Header - fixed
+        VerticalLayout {
+            vertical-stretch: 0;
+            spacing: 3px;
 
-        // Appearance
-        Rectangle {
-            horizontal-stretch: 1;
-            background: Theme.card;
-            border-radius: 8px;
-            border-width: 1px;
-            border-color: Theme.border;
+            Text {
+                text: "Settings";
+                font-size: 24px;
+                font-weight: 800;
+                color: Theme.text;
+            }
 
-            VerticalLayout {
-                padding: 20px;
-                spacing: 16px;
-
-                Text {
-                    text: "Appearance";
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: Theme.text;
-                }
-
-                HorizontalLayout {
-                    spacing: 8px;
-                    height: 36px;
-
-                    Rectangle {
-                        horizontal-stretch: 1;
-                        border-radius: 6px;
-                        background: Theme.dark ? Theme.accent : Theme.card;
-                        border-width: 1px;
-                        border-color: Theme.border;
-
-                        animate background { duration: 0.12s; }
-                        animate border-color { duration: 0.12s; }
-
-                        Text {
-                            text: "Dark";
-                            font-size: 13px;
-                            font-weight: Theme.dark ? 600 : 400;
-                            color: Theme.dark ? #000000 : Theme.text-secondary;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-
-                        touch-dark := TouchArea {
-                            clicked => { Theme.dark = true; }
-                        }
-
-                        states [
-                            hover when touch-dark.has-hover && !Theme.dark: {
-                                background: Theme.hover;
-                                border-color: Theme.hover;
-                            }
-                        ]
-                    }
-
-                    Rectangle {
-                        horizontal-stretch: 1;
-                        border-radius: 6px;
-                        background: !Theme.dark ? Theme.accent : Theme.card;
-                        border-width: 1px;
-                        border-color: Theme.border;
-
-                        animate background { duration: 0.12s; }
-                        animate border-color { duration: 0.12s; }
-
-                        Text {
-                            text: "Light";
-                            font-size: 13px;
-                            font-weight: !Theme.dark ? 600 : 400;
-                            color: !Theme.dark ? #ffffff : Theme.text-secondary;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-
-                        touch-light := TouchArea {
-                            clicked => { Theme.dark = false; }
-                        }
-
-                        states [
-                            hover when touch-light.has-hover && Theme.dark: {
-                                background: Theme.hover;
-                                border-color: Theme.hover;
-                            }
-                        ]
-                    }
-                }
+            Text {
+                text: "Configure application behavior, appearance, and wallpaper storage";
+                font-size: 13px;
+                color: Theme.text-secondary;
             }
         }
 
-        // General
-        Rectangle {
-            horizontal-stretch: 1;
-            background: Theme.card;
-            border-radius: 8px;
-            border-width: 1px;
-            border-color: Theme.border;
+        // Settings Content
+        ScrollView {
+            vertical-stretch: 1;
 
             VerticalLayout {
-                padding: 20px;
                 spacing: 16px;
+                alignment: start;
 
-                Text {
-                    text: "General";
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: Theme.text;
-                }
+                // Appearance Card
+                Rectangle {
+                    background: Theme.card;
+                    border-radius: 10px;
+                    border-width: 1px;
+                    border-color: Theme.border;
 
-                VerticalLayout {
-                    spacing: 8px;
-
-                    HorizontalLayout {
-                        spacing: 8px;
-
-                        ToggleSwitch {
-                            checked: root.run-on-startup;
-                            toggled => { root.toggle-startup(self.checked); }
-                        }
+                    VerticalLayout {
+                        padding: 20px;
+                        spacing: 14px;
 
                         Text {
-                            text: "Run on system startup";
-                            font-size: 13px;
+                            text: "Appearance";
+                            font-size: 15px;
+                            font-weight: 700;
                             color: Theme.text;
-                            vertical-alignment: center;
-                            TouchArea {
-                                clicked => { root.toggle-startup(!root.run-on-startup); }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            height: 38px;
+
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                border-radius: 6px;
+                                background: Theme.dark ? Theme.accent : Theme.sunken;
+                                border-width: 1px;
+                                border-color: Theme.border;
+                                animate background { duration: 0.15s; }
+
+                                Text {
+                                    text: "Dark Theme";
+                                    font-size: 13px;
+                                    font-weight: Theme.dark ? 700 : 500;
+                                    color: Theme.dark ? #000000 : Theme.text-secondary;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                touch-dark := TouchArea {
+                                    clicked => { Theme.dark = true; }
+                                    mouse-cursor: pointer;
+                                }
+                            }
+
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                border-radius: 6px;
+                                background: !Theme.dark ? Theme.accent : Theme.sunken;
+                                border-width: 1px;
+                                border-color: Theme.border;
+                                animate background { duration: 0.15s; }
+
+                                Text {
+                                    text: "Light Theme";
+                                    font-size: 13px;
+                                    font-weight: !Theme.dark ? 700 : 500;
+                                    color: !Theme.dark ? #ffffff : Theme.text-secondary;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                touch-light := TouchArea {
+                                    clicked => { Theme.dark = false; }
+                                    mouse-cursor: pointer;
+                                }
                             }
                         }
                     }
+                }
 
-                    HorizontalLayout {
-                        spacing: 8px;
+                // General Behavior Card
+                Rectangle {
+                    background: Theme.card;
+                    border-radius: 10px;
+                    border-width: 1px;
+                    border-color: Theme.border;
 
-                        ToggleSwitch {
-                            checked: root.pause-on-fullscreen;
-                            toggled => { root.toggle-pause-fullscreen(self.checked); }
-                        }
+                    VerticalLayout {
+                        padding: 20px;
+                        spacing: 16px;
 
                         Text {
-                            text: "Pause on fullscreen apps";
-                            font-size: 13px;
+                            text: "System Behavior";
+                            font-size: 15px;
+                            font-weight: 700;
                             color: Theme.text;
-                            vertical-alignment: center;
-                            TouchArea {
-                                clicked => { root.toggle-pause-fullscreen(!root.pause-on-fullscreen); }
+                        }
+
+                        VerticalLayout {
+                            spacing: 14px;
+
+                            HorizontalLayout {
+                                spacing: 12px;
+                                height: 26px;
+                                alignment: start;
+
+                                ToggleSwitch {
+                                    checked: root.run-on-startup;
+                                    toggled => { AppStore.toggle-startup(self.checked); }
+                                    y: (parent.height - self.height) / 2;
+                                }
+
+                                Text {
+                                    text: "Run on system startup";
+                                    font-size: 13px;
+                                    color: Theme.text;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 12px;
+                                height: 26px;
+                                alignment: start;
+
+                                ToggleSwitch {
+                                    checked: root.pause-on-fullscreen;
+                                    toggled => { AppStore.toggle-pause-fullscreen(self.checked); }
+                                    y: (parent.height - self.height) / 2;
+                                }
+
+                                Text {
+                                    text: "Pause wallpaper playback when running fullscreen applications";
+                                    font-size: 13px;
+                                    color: Theme.text;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            HorizontalLayout {
+                                spacing: 12px;
+                                height: 26px;
+                                alignment: start;
+
+                                ToggleSwitch {
+                                    checked: root.mute-live-wallpapers;
+                                    toggled => { AppStore.toggle-mute-live(self.checked); }
+                                    y: (parent.height - self.height) / 2;
+                                }
+
+                                Text {
+                                    text: "Mute live wallpaper audio by default";
+                                    font-size: 13px;
+                                    color: Theme.text;
+                                    vertical-alignment: center;
+                                }
                             }
                         }
                     }
                 }
-            }
-        }
 
-        // Wallpaper Storage
-        Rectangle {
-            horizontal-stretch: 1;
-            background: Theme.card;
-            border-radius: 8px;
-            border-width: 1px;
-            border-color: Theme.border;
+                // Static Wallpaper Storage Card
+                Rectangle {
+                    background: Theme.card;
+                    border-radius: 10px;
+                    border-width: 1px;
+                    border-color: Theme.border;
 
-            VerticalLayout {
-                padding: 20px;
-                spacing: 12px;
-
-                Text {
-                    text: "Wallpaper Storage";
-                    font-size: 14px;
-                    font-weight: 600;
-                    color: Theme.text;
-                }
-
-                Text {
-                    text: "Choose a folder to scan for wallpapers, or add a git repository to download from.";
-                    font-size: 13px;
-                    color: Theme.text-secondary;
-                    wrap: word-wrap;
-                }
-
-                HorizontalLayout {
-                    spacing: 8px;
-                    height: 36px;
-
-                    Rectangle {
-                        background: Theme.sunken;
-                        border-radius: 4px;
+                    VerticalLayout {
+                        padding: 20px;
+                        spacing: 12px;
 
                         Text {
-                            text: root.wallpaper-dir;
-                            font-size: 13px;
+                            text: "Static Wallpaper Directory";
+                            font-size: 15px;
+                            font-weight: 700;
                             color: Theme.text;
-                            vertical-alignment: center;
-                            x: 12px;
+                        }
+
+                        Text {
+                            text: "Folder to scan for images (.png, .jpg, .jpeg, .webp). Subfolders become category filters.";
+                            font-size: 13px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            height: 38px;
+
+                            Rectangle {
+                                background: Theme.sunken;
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: Theme.border;
+                                horizontal-stretch: 1;
+
+                                Text {
+                                    text: AppStore.wallpaper-dir;
+                                    font-size: 13px;
+                                    color: Theme.text;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                    x: 12px;
+                                }
+                            }
+
+                            Rectangle {
+                                background: Theme.accent;
+                                border-radius: 6px;
+                                min-width: 100px;
+
+                                Text {
+                                    text: "Browse...";
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Theme.dark ? #000000 : #ffffff;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                TouchArea {
+                                    clicked => { AppStore.select-wallpaper-dir(); }
+                                    mouse-cursor: pointer;
+                                }
+                            }
                         }
                     }
+                }
 
-                    Rectangle {
-                        background: Theme.accent;
-                        border-radius: 4px;
-                        horizontal-stretch: 0;
-                        min-width: 90px;
+                // Live Wallpaper Storage Card
+                Rectangle {
+                    background: Theme.card;
+                    border-radius: 10px;
+                    border-width: 1px;
+                    border-color: Theme.border;
+
+                    VerticalLayout {
+                        padding: 20px;
+                        spacing: 12px;
 
                         Text {
-                            text: "Browse...";
-                            font-size: 13px;
-                            font-weight: 600;
-                            color: Theme.dark ? #000000 : #ffffff;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
+                            text: "Live Wallpaper Directory";
+                            font-size: 15px;
+                            font-weight: 700;
+                            color: Theme.text;
                         }
 
-                        TouchArea {
-                            clicked => { AppStore.select-wallpaper-dir(); }
+                        Text {
+                            text: "Folder to scan for videos (.mp4, .webm, .mkv, .mov). Subfolders become category filters.";
+                            font-size: 13px;
+                            color: Theme.text-secondary;
+                            wrap: word-wrap;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            height: 38px;
+
+                            Rectangle {
+                                background: Theme.sunken;
+                                border-radius: 6px;
+                                border-width: 1px;
+                                border-color: Theme.border;
+                                horizontal-stretch: 1;
+
+                                Text {
+                                    text: AppStore.live-wallpaper-dir;
+                                    font-size: 13px;
+                                    color: Theme.text;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                    x: 12px;
+                                }
+                            }
+
+                            Rectangle {
+                                background: Theme.accent;
+                                border-radius: 6px;
+                                min-width: 100px;
+
+                                Text {
+                                    text: "Browse...";
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    color: Theme.dark ? #000000 : #ffffff;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+
+                                TouchArea {
+                                    clicked => { AppStore.select-live-wallpaper-dir(); }
+                                    mouse-cursor: pointer;
+                                }
+                            }
                         }
                     }
                 }
