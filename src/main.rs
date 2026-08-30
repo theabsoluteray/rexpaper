@@ -40,7 +40,7 @@ fn static_to_data(item: &WallpaperItem) -> WallpaperData {
         .unwrap_or_else(|| item.category.clone());
     WallpaperData {
         name: name.into(),
-        thumb: load_image_from_path(&item.path).unwrap_or_default(),
+        thumb: crate::thumbnail::load_static_thumbnail(&item.path),
         category: item.category.clone().into(),
         is_live: false,
         path: item.path.to_string_lossy().to_string().into(),

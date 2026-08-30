@@ -10,12 +10,39 @@ const THUMB_WIDTH: u32 = 480;
 const THUMB_HEIGHT: u32 = 270;
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
+/// Loads (and if needed generates and caches) a fast lightweight thumbnail for a static image file.
+/// This prevents loading full-size 4K/8K images into memory, saving gigabytes of RAM/VRAM.
+pub fn load_static_thumbnail(image_path: &Path) -> Image {
+    let cache_dir = get_cache_dir().join("static-thumbs");
+    let _ = std::fs::create_dir_all(&cache_dir);
+
+    let cached = cache_path(image_path, &cache_dir, 4);
+    if cached.is_file() {
+        if let Ok(img) = Image::load_from_path(&cached) {
+            return img;
+        }
+    }
+
+    if let Ok(dynamic_img) = image::open(image_path) {
+        let thumb = dynamic_img.thumbnail_exact(THUMB_WIDTH, THUMB_HEIGHT);
+        let _ = thumb.save(&cached);
+        if cached.is_file() {
+            if let Ok(img) = Image::load_from_path(&cached) {
+                return img;
+            }
+        }
+    }
+
+    // Fallback
+    Image::load_from_path(image_path).unwrap_or_default()
+}
+
 /// Loads (and if needed generates) a real frame thumbnail image for a video file.
 pub fn load_video_thumbnail(video_path: &Path) -> Image {
     let cache_dir = get_cache_dir().join("video-thumbs");
     let _ = std::fs::create_dir_all(&cache_dir);
 
-    let cached = cache_path(video_path, &cache_dir, 3);
+    let cached = cache_path(video_path, &cache_dir, 4);
     if cached.is_file() {
         if let Ok(img) = Image::load_from_path(&cached) {
             return img;
@@ -25,8 +52,8 @@ pub fn load_video_thumbnail(video_path: &Path) -> Image {
     extract_video_thumbnail(video_path, &cache_dir, &cached).unwrap_or_default()
 }
 
-fn cache_path(video_path: &Path, cache_dir: &Path, version: u64) -> PathBuf {
-    cache_dir.join(format!("v{:016x}.jpg", hash_path(video_path) ^ version))
+fn cache_path(file_path: &Path, cache_dir: &Path, version: u64) -> PathBuf {
+    cache_dir.join(format!("v{:016x}.jpg", hash_path(file_path) ^ version))
 }
 
 fn hash_path(path: &Path) -> u64 {
