@@ -72,6 +72,8 @@ fn group_rows(items: &[WallpaperData], cols: usize) -> ModelRc<RowData> {
     ModelRc::from(Rc::new(VecModel::from(rows)))
 }
 
+const MAX_GRID_ITEMS: usize = 250;
+
 /// Updates the static wallpaper UI: categories, filtered list, row grid, active category, and search query.
 fn refresh_static_ui(window: &MainWindow, state: &ThreadSafeState, category: &str, search: &str) {
     let state_locked = state.lock().unwrap();
@@ -84,7 +86,7 @@ fn refresh_static_ui(window: &MainWindow, state: &ThreadSafeState, category: &st
         .global::<AppStore>()
         .set_categories(ModelRc::from(Rc::new(VecModel::from(categories))));
     let filtered = state_locked.filter_static(category, search);
-    let converted: Vec<WallpaperData> = filtered.iter().map(static_to_data).collect();
+    let converted: Vec<WallpaperData> = filtered.iter().take(MAX_GRID_ITEMS).map(static_to_data).collect();
     window
         .global::<AppStore>()
         .set_filtered_static_wallpapers(ModelRc::from(Rc::new(VecModel::from(
@@ -114,7 +116,7 @@ fn refresh_live_ui(window: &MainWindow, state: &ThreadSafeState, category: &str,
         .global::<AppStore>()
         .set_live_categories(ModelRc::from(Rc::new(VecModel::from(categories))));
     let filtered = state_locked.filter_live(category, search);
-    let converted: Vec<WallpaperData> = filtered.iter().map(live_to_data).collect();
+    let converted: Vec<WallpaperData> = filtered.iter().take(MAX_GRID_ITEMS).map(live_to_data).collect();
     window
         .global::<AppStore>()
         .set_filtered_live_wallpapers(ModelRc::from(Rc::new(VecModel::from(
@@ -208,6 +210,14 @@ fn main() -> Result<(), slint::PlatformError> {
         let window_weak = main_window.as_weak();
         thread::spawn(move || {
             let _ = scan_and_load_static(&dir, state_clone.clone());
+            let paths: Vec<PathBuf> = state_clone
+                .lock()
+                .unwrap()
+                .static_wallpapers
+                .iter()
+                .map(|w| w.path.clone())
+                .collect();
+            crate::thumbnail::precompute_static_thumbnails(&paths);
             let _ = slint::invoke_from_event_loop(move || {
                 if let Some(window) = window_weak.upgrade() {
                     refresh_static_ui(&window, &state_clone, "All", "");
@@ -222,6 +232,14 @@ fn main() -> Result<(), slint::PlatformError> {
         let window_weak = main_window.as_weak();
         thread::spawn(move || {
             let _ = scan_and_load_live(&dir, state_clone.clone());
+            let paths: Vec<PathBuf> = state_clone
+                .lock()
+                .unwrap()
+                .live_wallpapers
+                .iter()
+                .map(|w| w.path.clone())
+                .collect();
+            crate::thumbnail::precompute_video_thumbnails(&paths);
             let _ = slint::invoke_from_event_loop(move || {
                 if let Some(window) = window_weak.upgrade() {
                     refresh_live_ui(&window, &state_clone, "All", "");
@@ -252,6 +270,14 @@ fn main() -> Result<(), slint::PlatformError> {
                 let win = window_weak.clone();
                 thread::spawn(move || {
                     let _ = scan_and_load_static(&PathBuf::from(folder_str), state_inner.clone());
+                    let paths: Vec<PathBuf> = state_inner
+                        .lock()
+                        .unwrap()
+                        .static_wallpapers
+                        .iter()
+                        .map(|w| w.path.clone())
+                        .collect();
+                    crate::thumbnail::precompute_static_thumbnails(&paths);
                     let _ = slint::invoke_from_event_loop(move || {
                         if let Some(window) = win.upgrade() {
                             refresh_static_ui(&window, &state_inner, "All", "");
@@ -353,6 +379,14 @@ fn main() -> Result<(), slint::PlatformError> {
                 let win = window_weak.clone();
                 thread::spawn(move || {
                     let _ = scan_and_load_live(&PathBuf::from(folder_str), state_inner.clone());
+                    let paths: Vec<PathBuf> = state_inner
+                        .lock()
+                        .unwrap()
+                        .live_wallpapers
+                        .iter()
+                        .map(|w| w.path.clone())
+                        .collect();
+                    crate::thumbnail::precompute_video_thumbnails(&paths);
                     let _ = slint::invoke_from_event_loop(move || {
                         if let Some(window) = win.upgrade() {
                             refresh_live_ui(&window, &state_inner, "All", "");
