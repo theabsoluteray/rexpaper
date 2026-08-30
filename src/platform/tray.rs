@@ -43,16 +43,17 @@ where
 
             let _ = RegisterClassW(&wnd_class);
 
+            // Message-only window (HWND_MESSAGE + WS_EX_TOOLWINDOW): never shows in taskbar or Alt-Tab
             let hwnd = CreateWindowExW(
-                WINDOW_EX_STYLE::default(),
+                WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
                 class_name,
                 w!("RexPaperTrayWindow"),
-                WS_OVERLAPPED,
+                WS_POPUP,
                 0,
                 0,
                 0,
                 0,
-                None,
+                Some(HWND_MESSAGE),
                 None,
                 Some(hinstance.into()),
                 None,

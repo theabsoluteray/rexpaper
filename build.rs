@@ -3,6 +3,16 @@ fn main() {
         .with_style("fluent".to_string());
     slint_build::compile_with_config("ui/main.slint", config).unwrap();
 
+    #[cfg(target_os = "windows")]
+    {
+        let mut res = winres::WindowsResource::new();
+        res.set_icon("assets/icon.ico");
+        res.set("ProductName", "RexPaper");
+        res.set("FileDescription", "RexPaper - Native Wallpaper Manager for Windows");
+        res.set("LegalCopyright", "GPL-3.0");
+        let _ = res.compile();
+    }
+
     // Locate the mpv import library (mpv.lib) needed to link the `libmpv` crate.
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
     let local_lib_dir = std::path::Path::new(&manifest_dir).join("mpv-lib");

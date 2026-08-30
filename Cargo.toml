@@ -38,6 +38,7 @@ windows = { version = "0.61", features = [
 [build-dependencies]
 slint-build = "1.17"
 rfd = "0.15"
+winres = "0.1"
 
 [profile.release]
 opt-level = 3

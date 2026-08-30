@@ -19,6 +19,11 @@
 
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
     <UIRef Id="WixUI_Minimal" />
+
+    <!-- Custom Cover Images & GPL License Agreement -->
+    <WixVariable Id="WixUILicenseRtf" Value="wix\license.rtf" />
+    <WixVariable Id="WixUIDialogBmp" Value="wix\dialog.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="wix\banner.bmp" />
   </Product>
 
   <Fragment>
@@ -58,16 +63,20 @@
   </Fragment>
 
   <Fragment>
+    <Icon Id="AppIcon" SourceFile="assets\icon.ico" />
+
     <Component Id="ApplicationShortcut" Directory="ApplicationProgramsFolder">
       <Shortcut Id="AppShortcut" Name="RexPaper" Target="[INSTALLFOLDER]rexpaper.exe" 
-                WorkingDirectory="INSTALLFOLDER" Description="RexPaper Wallpaper Manager" />
+                WorkingDirectory="INSTALLFOLDER" Description="RexPaper Wallpaper Manager"
+                Icon="AppIcon" />
       <RemoveFolder Id="RemoveAppFolder" On="uninstall" />
       <RegistryValue Root="HKCU" Key="Software\RexPaper" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
     <Component Id="DesktopShortcut" Directory="DesktopFolder">
       <Shortcut Id="AppDesktopShortcut" Name="RexPaper" Target="[INSTALLFOLDER]rexpaper.exe" 
-                WorkingDirectory="INSTALLFOLDER" Description="RexPaper Wallpaper Manager" />
+                WorkingDirectory="INSTALLFOLDER" Description="RexPaper Wallpaper Manager"
+                Icon="AppIcon" />
       <RegistryValue Root="HKCU" Key="Software\RexPaper" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
     </Component>
 
@@ -83,6 +92,7 @@
   <Fragment>
     <Property Id="ARPCOMMENTS">Fast, native wallpaper manager with mpv live wallpapers</Property>
     <Property Id="ARPCONTACT">RexPaper</Property>
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
     <Property Id="ARPURLINFOABOUT">https://github.com/theabsoluteray/rexpaper</Property>
     <Property Id="ARPNOREPAIR" Value="yes" />
     <Property Id="ARPNOmodify" Value="yes" />
