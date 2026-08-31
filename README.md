@@ -30,6 +30,10 @@
   <a href="#license">License</a>
 </p>
 
+<p align="center">
+  <img src="assets/preview.png" alt="RexPaper Interface Preview" width="100%" />
+</p>
+
 ---
 
 ## Overview
@@ -258,9 +262,10 @@ Compress-Archive -Path "$portableDir\*" -DestinationPath "RexPaper-1.0.0-Portabl
 
 ```
 rexpaper/
-├── assets/                  # Vector SVG icons and multi-resolution icon.ico
+├── assets/                  # Vector SVG icons, preview screenshots, and multi-resolution icon.ico
 │   ├── icon.ico             # Embedded application icon (16x16 to 256x256)
 │   ├── logo.svg             # RexPaper dinosaur brand logo
+│   ├── preview.png          # Application UI preview screenshot
 │   ├── live.svg             # Navigation icon for Live Wallpapers
 │   ├── static.svg           # Navigation icon for Static Wallpapers
 │   └── settings.svg         # Navigation icon for Settings
