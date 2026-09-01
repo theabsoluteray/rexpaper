@@ -23,7 +23,7 @@ use crate::models::AppState;
 pub use crate::models::{SharedState, WallpaperItem, LiveWallpaperItem};
 use crate::static_wallpaper::{apply_static_wallpaper, scan_and_load_static};
 use crate::live_wallpaper::{scan_and_load_live, LiveWallpaperController};
-use crate::platform::windows::{apply_live_wallpaper, stop_live_wallpaper, is_live_wallpaper_active};
+use crate::platform::windows::{apply_live_wallpaper, stop_live_wallpaper, is_live_wallpaper_active, start_fullscreen_monitor};
 use crate::settings::Settings;
 
 type ThreadSafeState = Arc<Mutex<AppState>>;
@@ -134,6 +134,64 @@ fn refresh_live_ui(window: &MainWindow, state: &ThreadSafeState, category: &str,
         .set_live_search_query(search.into());
 }
 
+fn scan_and_refresh_static(dir: PathBuf, state: ThreadSafeState, window_weak: slint::Weak<MainWindow>) {
+    thread::spawn(move || {
+        let _ = scan_and_load_static(&dir, state.clone());
+        let state_for_ui = state.clone();
+        let win = window_weak.clone();
+        let _ = slint::invoke_from_event_loop(move || {
+            if let Some(window) = win.upgrade() {
+                refresh_static_ui(&window, &state_for_ui, "All", "");
+            }
+        });
+
+        let paths: Vec<PathBuf> = state
+            .lock()
+            .map(|s| s.static_wallpapers.iter().map(|w| w.path.clone()).collect())
+            .unwrap_or_default();
+        crate::thumbnail::precompute_static_thumbnails(&paths);
+
+        let win_after = window_weak.clone();
+        let state_after = state.clone();
+        let _ = slint::invoke_from_event_loop(move || {
+            if let Some(window) = win_after.upgrade() {
+                let category = window.global::<AppStore>().get_active_category().to_string();
+                let search = window.global::<AppStore>().get_static_search_query().to_string();
+                refresh_static_ui(&window, &state_after, &category, &search);
+            }
+        });
+    });
+}
+
+fn scan_and_refresh_live(dir: PathBuf, state: ThreadSafeState, window_weak: slint::Weak<MainWindow>) {
+    thread::spawn(move || {
+        let _ = scan_and_load_live(&dir, state.clone());
+        let state_for_ui = state.clone();
+        let win = window_weak.clone();
+        let _ = slint::invoke_from_event_loop(move || {
+            if let Some(window) = win.upgrade() {
+                refresh_live_ui(&window, &state_for_ui, "All", "");
+            }
+        });
+
+        let paths: Vec<PathBuf> = state
+            .lock()
+            .map(|s| s.live_wallpapers.iter().map(|w| w.path.clone()).collect())
+            .unwrap_or_default();
+        crate::thumbnail::precompute_video_thumbnails(&paths);
+
+        let win_after = window_weak.clone();
+        let state_after = state.clone();
+        let _ = slint::invoke_from_event_loop(move || {
+            if let Some(window) = win_after.upgrade() {
+                let category = window.global::<AppStore>().get_active_live_category().to_string();
+                let search = window.global::<AppStore>().get_live_search_query().to_string();
+                refresh_live_ui(&window, &state_after, &category, &search);
+            }
+        });
+    });
+}
+
 fn main() -> Result<(), slint::PlatformError> {
     #[cfg(target_os = "windows")]
     unsafe {
@@ -145,7 +203,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     let state: ThreadSafeState = Arc::new(Mutex::new(AppState::default()));
     let settings = Arc::new(Mutex::new(Settings::load()));
-    let live_controller = Arc::new(Mutex::new(LiveWallpaperController::new().ok()));
+    let live_controller: Arc<Mutex<Option<LiveWallpaperController>>> = Arc::new(Mutex::new(None));
 
     let app_store = main_window.global::<AppStore>();
     let _theme = main_window.global::<Theme>();
@@ -204,48 +262,27 @@ fn main() -> Result<(), slint::PlatformError> {
         });
     });
 
-    // Load static wallpapers
-    if let Some(dir) = settings.lock().unwrap().wallpaper_dir.clone() {
-        let state_clone = state.clone();
-        let window_weak = main_window.as_weak();
-        thread::spawn(move || {
-            let _ = scan_and_load_static(&dir, state_clone.clone());
-            let paths: Vec<PathBuf> = state_clone
-                .lock()
-                .unwrap()
-                .static_wallpapers
-                .iter()
-                .map(|w| w.path.clone())
-                .collect();
-            crate::thumbnail::precompute_static_thumbnails(&paths);
-            let _ = slint::invoke_from_event_loop(move || {
-                if let Some(window) = window_weak.upgrade() {
-                    refresh_static_ui(&window, &state_clone, "All", "");
-                }
-            });
-        });
+    // Start background fullscreen monitor (auto-pauses live wallpaper during fullscreen games/apps to save GPU & power)
+    start_fullscreen_monitor(settings.clone());
+
+    // Load static and live wallpapers on startup
+    let (static_dir, live_dir) = {
+        if let Ok(s) = settings.lock() {
+            (s.wallpaper_dir.clone(), s.live_wallpaper_dir.clone())
+        } else {
+            (None, None)
+        }
+    };
+
+    if let Some(ref dir) = static_dir {
+        scan_and_refresh_static(dir.clone(), state.clone(), main_window.as_weak());
     }
 
-    // Load live wallpapers
-    if let Some(dir) = settings.lock().unwrap().live_wallpaper_dir.clone() {
-        let state_clone = state.clone();
-        let window_weak = main_window.as_weak();
-        thread::spawn(move || {
-            let _ = scan_and_load_live(&dir, state_clone.clone());
-            let paths: Vec<PathBuf> = state_clone
-                .lock()
-                .unwrap()
-                .live_wallpapers
-                .iter()
-                .map(|w| w.path.clone())
-                .collect();
-            crate::thumbnail::precompute_video_thumbnails(&paths);
-            let _ = slint::invoke_from_event_loop(move || {
-                if let Some(window) = window_weak.upgrade() {
-                    refresh_live_ui(&window, &state_clone, "All", "");
-                }
-            });
-        });
+    if let Some(ref dir) = live_dir {
+        scan_and_refresh_live(dir.clone(), state.clone(), main_window.as_weak());
+    } else if let Some(ref dir) = static_dir {
+        // Fallback: If live directory is not set, scan static directory for live video wallpapers
+        scan_and_refresh_live(dir.clone(), state.clone(), main_window.as_weak());
     }
 
     // --- Static wallpaper directory picker ---
@@ -255,35 +292,31 @@ fn main() -> Result<(), slint::PlatformError> {
     app_store.on_select_wallpaper_dir(move || {
         if let Some(folder) = rfd::FileDialog::new().pick_folder() {
             let folder_str = folder.to_string_lossy().to_string();
+            let folder_path = PathBuf::from(&folder_str);
             if let Some(window) = window_weak.upgrade() {
                 window
                     .global::<AppStore>()
                     .set_wallpaper_dir(folder_str.clone().into());
 
+                let mut sync_live = false;
                 // Persist the selected directory
                 if let Ok(mut s) = settings_for_select.lock() {
-                    s.wallpaper_dir = Some(PathBuf::from(&folder_str));
+                    let old_static = s.wallpaper_dir.clone();
+                    let old_live = s.live_wallpaper_dir.clone();
+                    s.wallpaper_dir = Some(folder_path.clone());
+                    if old_live.is_none() || old_live == old_static {
+                        s.live_wallpaper_dir = Some(folder_path.clone());
+                        sync_live = true;
+                    }
                     let _ = s.save();
                 }
 
-                let state_inner = state_for_select.clone();
-                let win = window_weak.clone();
-                thread::spawn(move || {
-                    let _ = scan_and_load_static(&PathBuf::from(folder_str), state_inner.clone());
-                    let paths: Vec<PathBuf> = state_inner
-                        .lock()
-                        .unwrap()
-                        .static_wallpapers
-                        .iter()
-                        .map(|w| w.path.clone())
-                        .collect();
-                    crate::thumbnail::precompute_static_thumbnails(&paths);
-                    let _ = slint::invoke_from_event_loop(move || {
-                        if let Some(window) = win.upgrade() {
-                            refresh_static_ui(&window, &state_inner, "All", "");
-                        }
-                    });
-                });
+                scan_and_refresh_static(folder_path.clone(), state_for_select.clone(), window_weak.clone());
+
+                if sync_live {
+                    window.global::<AppStore>().set_live_wallpaper_dir(folder_str.into());
+                    scan_and_refresh_live(folder_path, state_for_select.clone(), window_weak.clone());
+                }
             }
         }
     });
@@ -358,41 +391,37 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     // --- Live wallpaper directory picker ---
-    let state_clone = state.clone();
+    let state_for_live = state.clone();
     let settings_for_live = settings.clone();
     let window_weak = main_window.as_weak();
     app_store.on_select_live_wallpaper_dir(move || {
         if let Some(folder) = rfd::FileDialog::new().pick_folder() {
             let folder_str = folder.to_string_lossy().to_string();
+            let folder_path = PathBuf::from(&folder_str);
             if let Some(window) = window_weak.upgrade() {
                 window
                     .global::<AppStore>()
                     .set_live_wallpaper_dir(folder_str.clone().into());
 
+                let mut sync_static = false;
                 // Persist the selected directory
                 if let Ok(mut s) = settings_for_live.lock() {
-                    s.live_wallpaper_dir = Some(PathBuf::from(&folder_str));
+                    let old_static = s.wallpaper_dir.clone();
+                    let old_live = s.live_wallpaper_dir.clone();
+                    s.live_wallpaper_dir = Some(folder_path.clone());
+                    if old_static.is_none() || old_static == old_live {
+                        s.wallpaper_dir = Some(folder_path.clone());
+                        sync_static = true;
+                    }
                     let _ = s.save();
                 }
 
-                let state_inner = state_clone.clone();
-                let win = window_weak.clone();
-                thread::spawn(move || {
-                    let _ = scan_and_load_live(&PathBuf::from(folder_str), state_inner.clone());
-                    let paths: Vec<PathBuf> = state_inner
-                        .lock()
-                        .unwrap()
-                        .live_wallpapers
-                        .iter()
-                        .map(|w| w.path.clone())
-                        .collect();
-                    crate::thumbnail::precompute_video_thumbnails(&paths);
-                    let _ = slint::invoke_from_event_loop(move || {
-                        if let Some(window) = win.upgrade() {
-                            refresh_live_ui(&window, &state_inner, "All", "");
-                        }
-                    });
-                });
+                scan_and_refresh_live(folder_path.clone(), state_for_live.clone(), window_weak.clone());
+
+                if sync_static {
+                    window.global::<AppStore>().set_wallpaper_dir(folder_str.into());
+                    scan_and_refresh_static(folder_path, state_for_live.clone(), window_weak.clone());
+                }
             }
         }
     });
@@ -425,6 +454,9 @@ fn main() -> Result<(), slint::PlatformError> {
     app_store.on_play_live_wallpaper(move |path| {
         let path_buf = PathBuf::from(path.as_str());
         if let Ok(mut guard) = live_ctrl.lock() {
+            if guard.is_none() {
+                *guard = LiveWallpaperController::new().ok();
+            }
             if let Some(ctrl) = guard.as_mut() {
                 let _ = ctrl.play(&path_buf);
             }
@@ -461,11 +493,16 @@ fn main() -> Result<(), slint::PlatformError> {
             }
         }
         // Apply as desktop wallpaper via WorkerW + mpv
-        let _ = apply_live_wallpaper(&path_buf);
-        // Update UI state
-        if let Some(window) = window_weak.upgrade() {
-            window.global::<AppStore>().set_live_wallpaper_active(true);
-            window.global::<AppStore>().set_live_preview_visible(false);
+        match apply_live_wallpaper(&path_buf) {
+            Ok(_) => {
+                if let Some(window) = window_weak.upgrade() {
+                    window.global::<AppStore>().set_live_wallpaper_active(true);
+                    window.global::<AppStore>().set_live_preview_visible(false);
+                }
+            }
+            Err(e) => {
+                eprintln!("[RexPaper] Error applying live wallpaper: {}", e);
+            }
         }
     });
 
@@ -503,16 +540,19 @@ fn main() -> Result<(), slint::PlatformError> {
     app_store.set_live_preview_visible(false);
     app_store.set_live_preview_path("".into());
     app_store.set_live_wallpaper_active(false);
-    app_store.set_run_on_startup(settings.lock().unwrap().run_on_startup);
-    app_store.set_pause_on_fullscreen(settings.lock().unwrap().pause_on_fullscreen);
-    app_store.set_mute_live_wallpapers(settings.lock().unwrap().mute_live_wallpapers);
-
-    // Display saved directory paths in the UI
     if let Ok(s) = settings.lock() {
+        app_store.set_run_on_startup(s.run_on_startup);
+        app_store.set_pause_on_fullscreen(s.pause_on_fullscreen);
+        app_store.set_mute_live_wallpapers(s.mute_live_wallpapers);
+
         if let Some(ref dir) = s.wallpaper_dir {
+            app_store.set_wallpaper_dir(dir.to_string_lossy().to_string().into());
+        } else if let Some(ref dir) = s.live_wallpaper_dir {
             app_store.set_wallpaper_dir(dir.to_string_lossy().to_string().into());
         }
         if let Some(ref dir) = s.live_wallpaper_dir {
+            app_store.set_live_wallpaper_dir(dir.to_string_lossy().to_string().into());
+        } else if let Some(ref dir) = s.wallpaper_dir {
             app_store.set_live_wallpaper_dir(dir.to_string_lossy().to_string().into());
         }
     }

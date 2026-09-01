@@ -87,7 +87,20 @@ export component NavBar inherits Rectangle {
             alignment: start;
             vertical-stretch: 0;
 
-          
+            Rectangle {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                clip: true;
+                background: Theme.sunken;
+
+                Image {
+                    source: @image-url("../assets/logo.png");
+                    width: 100%;
+                    height: 100%;
+                    image-fit: cover;
+                }
+            }
 
             VerticalLayout {
                 spacing: 1px;

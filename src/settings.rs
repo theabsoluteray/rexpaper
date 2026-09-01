@@ -26,6 +26,14 @@ impl Default for Settings {
     }
 }
 
+pub fn get_app_dir() -> PathBuf {
+    if let Some(dirs) = ProjectDirs::from("com", "rexpaper", "RexPaper") {
+        dirs.config_dir().to_path_buf()
+    } else {
+        std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+    }
+}
+
 impl Settings {
     pub fn load() -> Self {
         if let Some(dirs) = ProjectDirs::from("com", "rexpaper", "RexPaper") {

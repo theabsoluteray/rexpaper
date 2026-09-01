@@ -73,22 +73,7 @@ where
                 ..Default::default()
             };
 
-            // Load embedded application logo icon (Resource ID 1 from winres) at exact small icon resolution
-            let icon = LoadImageW(
-                Some(hinstance.into()),
-                windows::core::PCWSTR(1 as _),
-                IMAGE_ICON,
-                GetSystemMetrics(SM_CXSMICON),
-                GetSystemMetrics(SM_CYSMICON),
-                LR_DEFAULTCOLOR,
-            )
-            .map(|h| HICON(h.0))
-            .unwrap_or_else(|_| {
-                LoadIconW(Some(hinstance.into()), windows::core::PCWSTR(1 as _)).unwrap_or_else(|_| {
-                    LoadIconW(None, IDI_APPLICATION).unwrap_or_default()
-                })
-            });
-            nid.hIcon = icon;
+            nid.hIcon = load_tray_icon();
 
             // Set tooltip
             let tip = "RexPaper - Wallpaper Manager";
@@ -160,4 +145,109 @@ unsafe extern "system" fn tray_wnd_proc(
     lparam: LPARAM,
 ) -> LRESULT {
     unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }
+}
+
+static ICON_BYTES: &[u8] = include_bytes!("../../assets/icon.ico");
+
+unsafe fn load_tray_icon() -> HICON {
+    unsafe {
+        let cx = GetSystemMetrics(SM_CXSMICON);
+        let cy = GetSystemMetrics(SM_CYSMICON);
+        let hinstance = GetModuleHandleW(None).unwrap_or_default();
+
+        // 1. Try loading from embedded byte stream (guaranteed pixel-perfect match)
+        if let Some(hicon) = load_hicon_from_ico_bytes(ICON_BYTES, cx, cy) {
+            return hicon;
+        }
+
+        // 2. Try loading named resource "MAINICON"
+        if let Ok(h) = LoadImageW(
+            Some(hinstance.into()),
+            windows::core::w!("MAINICON"),
+            IMAGE_ICON,
+            cx,
+            cy,
+            LR_DEFAULTCOLOR,
+        ) {
+            if !h.0.is_null() {
+                return HICON(h.0);
+            }
+        }
+
+        // 3. Try loading resource ID 1
+        if let Ok(h) = LoadImageW(
+            Some(hinstance.into()),
+            windows::core::PCWSTR(1 as _),
+            IMAGE_ICON,
+            cx,
+            cy,
+            LR_DEFAULTCOLOR,
+        ) {
+            if !h.0.is_null() {
+                return HICON(h.0);
+            }
+        }
+
+        // 4. Fallback default
+        LoadIconW(None, IDI_APPLICATION).unwrap_or_default()
+    }
+}
+
+unsafe fn load_hicon_from_ico_bytes(data: &[u8], target_w: i32, target_h: i32) -> Option<HICON> {
+    unsafe {
+        if data.len() < 6 {
+            return None;
+        }
+
+        let count = u16::from_le_bytes([data[4], data[5]]) as usize;
+        if data.len() < 6 + count * 16 {
+            return None;
+        }
+
+        let mut best_entry: Option<(usize, usize)> = None; // (offset, size)
+        let mut best_diff = i32::MAX;
+
+        for i in 0..count {
+            let entry_offset = 6 + i * 16;
+            let w = if data[entry_offset] == 0 { 256 } else { data[entry_offset] as i32 };
+            let dw_bytes = u32::from_le_bytes([
+                data[entry_offset + 8],
+                data[entry_offset + 9],
+                data[entry_offset + 10],
+                data[entry_offset + 11],
+            ]) as usize;
+            let dw_offset = u32::from_le_bytes([
+                data[entry_offset + 12],
+                data[entry_offset + 13],
+                data[entry_offset + 14],
+                data[entry_offset + 15],
+            ]) as usize;
+
+            if data.len() >= dw_offset + dw_bytes {
+                let diff = (w - target_w).abs();
+                if diff < best_diff {
+                    best_diff = diff;
+                    best_entry = Some((dw_offset, dw_bytes));
+                }
+            }
+        }
+
+        if let Some((offset, size)) = best_entry {
+            let icon_slice = &data[offset..offset + size];
+            if let Ok(hicon) = CreateIconFromResourceEx(
+                icon_slice,
+                true, // TRUE for icon
+                0x00030000,
+                target_w,
+                target_h,
+                LR_DEFAULTCOLOR,
+            ) {
+                if !hicon.0.is_null() {
+                    return Some(hicon);
+                }
+            }
+        }
+
+        None
+    }
 }

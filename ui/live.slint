@@ -157,14 +157,52 @@ export component LivePage inherits Rectangle {
             border-color: Theme.border;
             clip: true;
 
-            if AppStore.live-rows.length == 0 : Text {
-                text: "No live wallpapers found.\nChoose a directory in Settings or adjust your filter.";
-                color: Theme.text-muted;
-                font-size: 14px;
-                horizontal-alignment: center;
-                vertical-alignment: center;
+            if AppStore.live-rows.length == 0 : VerticalLayout {
+                alignment: center;
+                spacing: 12px;
                 width: 100%;
                 height: 100%;
+
+                Text {
+                    text: "No live wallpapers found";
+                    color: Theme.text;
+                    font-size: 16px;
+                    font-weight: 700;
+                    horizontal-alignment: center;
+                }
+
+                Text {
+                    text: "Select a folder containing video wallpapers (.mp4, .webm, .mkv, .mov, etc.)";
+                    color: Theme.text-secondary;
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                }
+
+                Rectangle { height: 6px; }
+
+                HorizontalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 180px;
+                        height: 38px;
+                        background: Theme.accent;
+                        border-radius: 8px;
+
+                        Text {
+                            text: "Choose Folder...";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Theme.dark ? #000000 : #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        TouchArea {
+                            clicked => { AppStore.select-live-wallpaper-dir(); }
+                            mouse-cursor: pointer;
+                        }
+                    }
+                }
             }
 
             Flickable {
