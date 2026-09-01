@@ -46,14 +46,14 @@ Whether managing thousands of ultra-high-resolution 4K/8K static wallpapers or r
 
 ## Features
 
-### 🖼️ High-Performance Static Wallpaper Gallery
+### High-Performance Static Wallpaper Gallery
 - **Recursive Directory Scanning**: Scans custom wallpaper directories recursively and indexes entire collections in milliseconds.
 - **Dynamic Category Organization**: Automatically groups wallpapers into clean categories based on subfolder structure (e.g., `Wallpapers/Anime/pic.jpg` &rarr; `Anime`).
 - **Real-Time Instant Search**: Live text-filtering across titles and categories as you type.
 - **Full-Bleed Modern Gallery Cards**: Edge-to-edge 16:9 widescreen card layout with subtle hover sheen effects, uniform 4-column responsive grid, and distraction-free presentation.
 - **Native Win32 Wallpaper Application**: Applies static wallpapers directly via `SystemParametersInfoW(SPI_SETDESKWALLPAPER)` with instant desktop refresh.
 
-### 🎬 Hardware-Accelerated Live Video Wallpapers
+### Hardware-Accelerated Live Video Wallpapers
 - **GPU-Accelerated Video Engine**: Direct3D11 / GPU-powered rendering (`--vo=gpu`, `--hwdec=auto-safe`) delivering butter-smooth 60+ FPS playback with near-zero CPU consumption.
 - **WorkerW Desktop Canvas Injection**: Injects video playback seamlessly behind Windows desktop icons (`SHELLDLL_DefView`) using `Progman` shell message `0x052C` and `WorkerW` reparenting.
 - **In-App Interactive Preview**: Test and preview live video wallpapers within the application window before applying them to the Windows desktop.
@@ -62,14 +62,14 @@ Whether managing thousands of ultra-high-resolution 4K/8K static wallpapers or r
   - **Static &rarr; Live**: Reveals `WorkerW` (`SW_SHOW`), cleans up orphan processes, and launches hardware-accelerated playback attached to `--wid=<hwnd>`.
 - **Live Wallpaper Controls**: Start, pause, resume, and stop desktop live wallpapers at any time with a single click.
 
-### ⚡ Multi-Core Background Precomputation & Disk Caching
+### Multi-Core Background Precomputation & Disk Caching
 - **Parallel Multi-Core Resizing**: Uses Rayon (`rayon::par_iter()`) across all available CPU threads to resize and precompute thumbnails in parallel on background threads without blocking the Slint UI.
 - **GPU-Accelerated Frame Extraction**: Captures crisp high-definition video frames at 0.5s via `mpv` (`--vo=image`, `--hwdec=auto-safe`) for instantaneous video browsing.
 - **Persistent Disk Caching**: Caches 384&times;216 px thumbnails in `%LOCALAPPDATA%/rexpaper/cache` using fast 64-bit cryptographic hashing (`v{:016x}.jpg`) for sub-millisecond lookup on subsequent launches.
 - **98% Memory Reduction**: High-efficiency disk cache keeps RAM usage under **30 MB** even when browsing libraries containing thousands of large 4K/8K images and videos.
 - **Crash-Proof Fault Tolerance**: All image decoding and thumbnail generation tasks are wrapped in `std::panic::catch_unwind` with clean dark placeholder fallbacks (`#181920`) if corrupt files are encountered.
 
-### 🪟 Deep Windows System Integration
+### Deep Windows System Integration
 - **Pure Windows Desktop Subsystem**: Compiled with `#![windows_subsystem = "windows"]` to completely eliminate terminal/console window flashes on launch.
 - **Message-Only Background System Tray (`HWND_MESSAGE`)**: Custom Win32 message window (`WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE`) that resides silently in the Windows Taskbar Notification Area without ghost taskbar entries or Alt-Tab clutter.
 - **System Tray Context Menu**: Quick access to Open RexPaper, Static Wallpapers, Live Wallpapers, Settings, and Quit.
@@ -77,7 +77,7 @@ Whether managing thousands of ultra-high-resolution 4K/8K static wallpapers or r
 - **Per-Monitor V2 HiDPI Awareness**: Enforces `DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2` on startup for razor-sharp vector graphics, text, and layouts across 100%, 125%, 150%, 175%, and 200% display scaling.
 - **Silent Windows Autostart**: Native registry integration (`HKCU\Software\Microsoft\Windows\CurrentVersion\Run`) with `--autostart` / `--minimized` flags to boot silently into the system tray.
 
-### ⚙️ Configurable Settings & Persistence
+### Configurable Settings & Persistence
 - **Persistent JSON Configuration**: Application settings saved to `%APPDATA%/rexpaper/settings.json` via Serde.
 - **Custom Directory Pickers**: Native Windows folder pickers via `rfd` (Rust File Dialog) for selecting static and live wallpaper library locations.
 - **Configurable Toggles**:
@@ -85,7 +85,7 @@ Whether managing thousands of ultra-high-resolution 4K/8K static wallpapers or r
   - *Pause on Fullscreen* (reduces GPU/CPU usage when playing games or running full-screen software)
   - *Mute Live Wallpapers* (silent background playback)
 
-### 📦 Enterprise Packaging & Distribution
+### Enterprise Packaging & Distribution
 - **WiX Toolset MSI Installer**: Enterprise `.msi` Windows installer package featuring custom splash and banner graphics, GPL-3.0 RTF license agreement dialog, Start Menu & Desktop shortcuts, and Windows Add/Remove Programs (ARP) integration.
 - **Portable x64 Zip Package**: Self-contained standalone distribution bundling `rexpaper.exe`, `libmpv-2.dll`, `mpv.dll`, `mpv.exe`, `mpv.com`, assets, license, and docs.
 - **Automated Build Staging (`build.rs`)**: Automatically discovers MSVC import libraries (`mpv.lib`), compiles Windows PE binary metadata/icons (`winres`), and stages dynamic runtime libraries (`libmpv-2.dll`, `mpv.dll`, `mpv-2.dll`) to build output targets.
@@ -331,5 +331,5 @@ rexpaper/
 This project is licensed under the **GNU General Public License v3.0** &mdash; see the [LICENSE](LICENSE) file for details.
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/theabsoluteray">theabsoluteray</a>
+  Made by <a href="https://github.com/theabsoluteray">theabsoluteray</a>
 </p>
