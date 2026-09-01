@@ -1,6 +1,6 @@
 [package]
 name = "rexpaper"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 description = "A fast, native wallpaper manager for Windows with mpv live wallpapers, built with Rust + Slint"
 license = "GPL-3.0"

@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -129,8 +130,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            RexPaper-1.0.0-x64.msi
-            RexPaper-1.0.0-Portable-x64.zip
+            RexPaper-*.msi
+            RexPaper-*.zip
           generate_release_notes: true
           draft: false
           prerelease: false

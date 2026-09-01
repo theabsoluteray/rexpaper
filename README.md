@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="RexPaper Logo" width="128" height="128" />
+  <img src="assets/logo.png" alt="RexPaper Logo" width="128" height="128" />
 </p>
 
 <h1 align="center">RexPaper</h1>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-1.0.1-blue?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/rust-edition%202024-orange?style=flat-square&logo=rust" alt="Rust Edition 2024" />
   <img src="https://img.shields.io/badge/slint-1.17-purple?style=flat-square" alt="Slint 1.17" />
   <img src="https://img.shields.io/badge/license-GPL--3.0-green?style=flat-square" alt="License GPL-3.0" />
