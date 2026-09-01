@@ -62,25 +62,27 @@ export global AppStore {
 export global Theme {
     in-out property <bool> dark: true;
 
-    in-out property <color> bg: root.dark ? #0b0c10 : #f5f5f7;
-    in-out property <color> sidebar: root.dark ? #111217 : #ffffff;
-    in-out property <color> card: root.dark ? #16171f : #ffffff;
-    in-out property <color> card-hover: root.dark ? #1f202b : #f0f0f5;
-    in-out property <color> sunken: root.dark ? #101116 : #e8e8ed;
+    in-out property <color> bg: root.dark ? #0d0f17 : #f4f5f8;
+    in-out property <color> sidebar: root.dark ? #121520 : #ffffff;
+    in-out property <color> card: root.dark ? #181c28 : #ffffff;
+    in-out property <color> card-hover: root.dark ? #22283a : #f1f3f7;
+    in-out property <color> sunken: root.dark ? #0f121a : #e8ebf0;
 
-    in-out property <color> text: root.dark ? #ffffff : #111116;
-    in-out property <color> text-secondary: root.dark ? #9496a8 : #555770;
-    in-out property <color> text-muted: root.dark ? #65677a : #8c8ea0;
+    in-out property <color> text: root.dark ? #ffffff : #0f172a;
+    in-out property <color> text-secondary: root.dark ? #a0a6b8 : #525c6e;
+    in-out property <color> text-muted: root.dark ? #6d758a : #8b95a8;
 
-    in-out property <color> accent: root.dark ? #ffffff : #000000;
-    in-out property <color> accent-soft: root.dark ? #ffffff22 : #00000022;
+    in-out property <color> accent: root.dark ? #ffffff : #0f172a;
+    in-out property <color> accent-primary: #6366f1;
+    in-out property <color> accent-soft: root.dark ? #6366f12e : #6366f11c;
 
-    in-out property <color> border: root.dark ? #232430 : #d8d8e2;
-    in-out property <color> divider: root.dark ? #1a1b24 : #e2e2ec;
+    in-out property <color> border: root.dark ? #262c3e : #d8dce6;
+    in-out property <color> border-subtle: root.dark ? #1e2332 : #e5e8f0;
+    in-out property <color> divider: root.dark ? #1c212f : #e5e8f0;
 
-    in-out property <color> hover: root.dark ? #1c1d26 : #eaeaf2;
-    in-out property <color> pressed: root.dark ? #262734 : #dcdce8;
+    in-out property <color> hover: root.dark ? #202637 : #e8ecf4;
+    in-out property <color> pressed: root.dark ? #2a3248 : #dce1ed;
 
-    in-out property <color> nav-active: root.dark ? #ffffff1e : #00000018;
-    in-out property <color> nav-active-accent: root.dark ? #ffffff : #000000;
+    in-out property <color> nav-active: root.dark ? #ffffff1c : #0f172a14;
+    in-out property <color> nav-active-accent: root.dark ? #ffffff : #0f172a;
 }

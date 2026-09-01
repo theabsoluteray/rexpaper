@@ -288,37 +288,38 @@ fn main() -> Result<(), slint::PlatformError> {
     // --- Static wallpaper directory picker ---
     let state_for_select = state.clone();
     let settings_for_select = settings.clone();
-    let window_weak = main_window.as_weak();
+    let window_weak_static_pick = main_window.as_weak();
     app_store.on_select_wallpaper_dir(move || {
-        if let Some(folder) = rfd::FileDialog::new().pick_folder() {
-            let folder_str = folder.to_string_lossy().to_string();
-            let folder_path = PathBuf::from(&folder_str);
-            if let Some(window) = window_weak.upgrade() {
-                window
-                    .global::<AppStore>()
-                    .set_wallpaper_dir(folder_str.clone().into());
-
-                let mut sync_live = false;
-                // Persist the selected directory
-                if let Ok(mut s) = settings_for_select.lock() {
-                    let old_static = s.wallpaper_dir.clone();
-                    let old_live = s.live_wallpaper_dir.clone();
+        let win_weak = window_weak_static_pick.clone();
+        let state_c = state_for_select.clone();
+        let settings_c = settings_for_select.clone();
+        thread::spawn(move || {
+            #[cfg(target_os = "windows")]
+            unsafe {
+                let _ = windows::Win32::System::Com::CoInitializeEx(
+                    None,
+                    windows::Win32::System::Com::COINIT_APARTMENTTHREADED,
+                );
+            }
+            if let Some(folder) = rfd::FileDialog::new().pick_folder() {
+                let folder_str = folder.to_string_lossy().to_string();
+                let folder_path = PathBuf::from(&folder_str);
+                if let Ok(mut s) = settings_c.lock() {
                     s.wallpaper_dir = Some(folder_path.clone());
-                    if old_live.is_none() || old_live == old_static {
-                        s.live_wallpaper_dir = Some(folder_path.clone());
-                        sync_live = true;
-                    }
                     let _ = s.save();
                 }
-
-                scan_and_refresh_static(folder_path.clone(), state_for_select.clone(), window_weak.clone());
-
-                if sync_live {
-                    window.global::<AppStore>().set_live_wallpaper_dir(folder_str.into());
-                    scan_and_refresh_live(folder_path, state_for_select.clone(), window_weak.clone());
-                }
+                let win_clone = win_weak.clone();
+                let folder_str_clone = folder_str.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(window) = win_clone.upgrade() {
+                        window
+                            .global::<AppStore>()
+                            .set_wallpaper_dir(folder_str_clone.into());
+                    }
+                });
+                scan_and_refresh_static(folder_path, state_c, win_weak);
             }
-        }
+        });
     });
 
     // --- Static category filter ---
@@ -393,37 +394,38 @@ fn main() -> Result<(), slint::PlatformError> {
     // --- Live wallpaper directory picker ---
     let state_for_live = state.clone();
     let settings_for_live = settings.clone();
-    let window_weak = main_window.as_weak();
+    let window_weak_live_pick = main_window.as_weak();
     app_store.on_select_live_wallpaper_dir(move || {
-        if let Some(folder) = rfd::FileDialog::new().pick_folder() {
-            let folder_str = folder.to_string_lossy().to_string();
-            let folder_path = PathBuf::from(&folder_str);
-            if let Some(window) = window_weak.upgrade() {
-                window
-                    .global::<AppStore>()
-                    .set_live_wallpaper_dir(folder_str.clone().into());
-
-                let mut sync_static = false;
-                // Persist the selected directory
-                if let Ok(mut s) = settings_for_live.lock() {
-                    let old_static = s.wallpaper_dir.clone();
-                    let old_live = s.live_wallpaper_dir.clone();
+        let win_weak = window_weak_live_pick.clone();
+        let state_c = state_for_live.clone();
+        let settings_c = settings_for_live.clone();
+        thread::spawn(move || {
+            #[cfg(target_os = "windows")]
+            unsafe {
+                let _ = windows::Win32::System::Com::CoInitializeEx(
+                    None,
+                    windows::Win32::System::Com::COINIT_APARTMENTTHREADED,
+                );
+            }
+            if let Some(folder) = rfd::FileDialog::new().pick_folder() {
+                let folder_str = folder.to_string_lossy().to_string();
+                let folder_path = PathBuf::from(&folder_str);
+                if let Ok(mut s) = settings_c.lock() {
                     s.live_wallpaper_dir = Some(folder_path.clone());
-                    if old_static.is_none() || old_static == old_live {
-                        s.wallpaper_dir = Some(folder_path.clone());
-                        sync_static = true;
-                    }
                     let _ = s.save();
                 }
-
-                scan_and_refresh_live(folder_path.clone(), state_for_live.clone(), window_weak.clone());
-
-                if sync_static {
-                    window.global::<AppStore>().set_wallpaper_dir(folder_str.into());
-                    scan_and_refresh_static(folder_path, state_for_live.clone(), window_weak.clone());
-                }
+                let win_clone = win_weak.clone();
+                let folder_str_clone = folder_str.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(window) = win_clone.upgrade() {
+                        window
+                            .global::<AppStore>()
+                            .set_live_wallpaper_dir(folder_str_clone.into());
+                    }
+                });
+                scan_and_refresh_live(folder_path, state_c, win_weak);
             }
-        }
+        });
     });
 
     // --- Live category filter ---

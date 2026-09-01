@@ -9,9 +9,7 @@ const VIDEO_EXTENSIONS: &[&str] = &[
 ];
 
 pub fn scan_static(root: &Path, state: SharedState) -> Result<(), Box<dyn std::error::Error>> {
-    let mut state_locked = state.lock().unwrap();
-    state_locked.static_wallpapers.clear();
-    state_locked.categories.clear();
+    let mut items = Vec::new();
 
     for entry in WalkDir::new(root).follow_links(true).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
@@ -21,20 +19,25 @@ pub fn scan_static(root: &Path, state: SharedState) -> Result<(), Box<dyn std::e
 
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if IMAGE_EXTENSIONS.contains(&ext.to_lowercase().as_str()) {
-                state_locked.add_static_wallpaper(WallpaperItem {
+                items.push(WallpaperItem {
                     path: path.to_path_buf(),
                     category: get_category(root, path),
                 });
             }
         }
     }
+
+    let mut state_locked = state.lock().unwrap();
+    state_locked.static_wallpapers.clear();
+    state_locked.categories.clear();
+    for item in items {
+        state_locked.add_static_wallpaper(item);
+    }
     Ok(())
 }
 
 pub fn scan_live(root: &Path, state: SharedState) -> Result<(), Box<dyn std::error::Error>> {
-    let mut state_locked = state.lock().unwrap();
-    state_locked.live_wallpapers.clear();
-    state_locked.live_categories.clear();
+    let mut items = Vec::new();
 
     for entry in WalkDir::new(root).follow_links(true).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
@@ -44,13 +47,20 @@ pub fn scan_live(root: &Path, state: SharedState) -> Result<(), Box<dyn std::err
 
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if VIDEO_EXTENSIONS.contains(&ext.to_lowercase().as_str()) {
-                state_locked.add_live_wallpaper(LiveWallpaperItem {
+                items.push(LiveWallpaperItem {
                     path: path.to_path_buf(),
                     category: get_category(root, path),
                     duration: None,
                 });
             }
         }
+    }
+
+    let mut state_locked = state.lock().unwrap();
+    state_locked.live_wallpapers.clear();
+    state_locked.live_categories.clear();
+    for item in items {
+        state_locked.add_live_wallpaper(item);
     }
     Ok(())
 }

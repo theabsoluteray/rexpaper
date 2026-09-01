@@ -278,20 +278,27 @@ export component SettingsPage inherits Rectangle {
                             }
 
                             Rectangle {
-                                background: Theme.accent;
+                                background: browse-static-touch.has-hover ? Theme.accent : Theme.sunken;
                                 border-radius: 6px;
+                                border-width: 1px;
+                                border-color: browse-static-touch.has-hover ? Theme.accent : Theme.border;
                                 min-width: 100px;
+                                animate background { duration: 0.15s; }
+                                animate border-color { duration: 0.15s; }
 
                                 Text {
                                     text: "Browse...";
                                     font-size: 13px;
                                     font-weight: 700;
-                                    color: Theme.dark ? #000000 : #ffffff;
+                                    color: browse-static-touch.has-hover ? (Theme.dark ? #000000 : #ffffff) : Theme.text;
                                     horizontal-alignment: center;
                                     vertical-alignment: center;
+                                    animate color { duration: 0.15s; }
                                 }
 
-                                TouchArea {
+                                browse-static-touch := TouchArea {
+                                    width: 100%;
+                                    height: 100%;
                                     clicked => { AppStore.select-wallpaper-dir(); }
                                     mouse-cursor: pointer;
                                 }
@@ -347,20 +354,27 @@ export component SettingsPage inherits Rectangle {
                             }
 
                             Rectangle {
-                                background: Theme.accent;
+                                background: browse-live-touch.has-hover ? Theme.accent : Theme.sunken;
                                 border-radius: 6px;
+                                border-width: 1px;
+                                border-color: browse-live-touch.has-hover ? Theme.accent : Theme.border;
                                 min-width: 100px;
+                                animate background { duration: 0.15s; }
+                                animate border-color { duration: 0.15s; }
 
                                 Text {
                                     text: "Browse...";
                                     font-size: 13px;
                                     font-weight: 700;
-                                    color: Theme.dark ? #000000 : #ffffff;
+                                    color: browse-live-touch.has-hover ? (Theme.dark ? #000000 : #ffffff) : Theme.text;
                                     horizontal-alignment: center;
                                     vertical-alignment: center;
+                                    animate color { duration: 0.15s; }
                                 }
 
-                                TouchArea {
+                                browse-live-touch := TouchArea {
+                                    width: 100%;
+                                    height: 100%;
                                     clicked => { AppStore.select-live-wallpaper-dir(); }
                                     mouse-cursor: pointer;
                                 }

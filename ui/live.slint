@@ -2,8 +2,8 @@ import { Theme, WallpaperData, AppStore } from "store.slint";
 import { ComboBox, LineEdit } from "std-widgets.slint";
 
 export global LiveConstants {
-    in-out property <length> thumb-height: 155px;
-    in-out property <length> grid-gap: 14px;
+    in-out property <length> thumb-height: 160px;
+    in-out property <length> grid-gap: 16px;
 }
 
 component LiveWallpaperItem inherits Rectangle {
@@ -11,16 +11,16 @@ component LiveWallpaperItem inherits Rectangle {
 
     horizontal-stretch: 1;
     min-width: 0px;
-    preferred-width: 200px;
+    preferred-width: 220px;
     height: LiveConstants.thumb-height;
     background: Theme.sunken;
-    border-radius: 8px;
+    border-radius: 10px;
     border-width: touch.has-hover ? 2px : 1px;
     border-color: touch.has-hover ? Theme.accent : Theme.border;
     clip: true;
-    animate border-color { duration: 180ms; easing: ease-out; }
-    animate border-width { duration: 180ms; easing: ease-out; }
-    animate background { duration: 180ms; easing: ease-out; }
+    animate border-color { duration: 160ms; easing: ease-out; }
+    animate border-width { duration: 160ms; easing: ease-out; }
+    animate background { duration: 160ms; easing: ease-out; }
 
     Image {
         source: wallpaper.thumb;
@@ -33,8 +33,8 @@ component LiveWallpaperItem inherits Rectangle {
     Rectangle {
         width: 100%;
         height: 100%;
-        background: touch.has-hover ? #ffffff18 : transparent;
-        animate background { duration: 180ms; easing: ease-out; }
+        background: touch.has-hover ? #ffffff15 : transparent;
+        animate background { duration: 160ms; easing: ease-out; }
     }
 
     touch := TouchArea {
@@ -73,18 +73,18 @@ export component LivePage inherits Rectangle {
             }
 
             Text {
-                text: "Click any video wallpaper to apply it as your desktop background";
+                text: "Click any video wallpaper to set it as your live animated desktop background";
                 font-size: 13px;
                 color: Theme.text-secondary;
             }
         }
 
-        // Filter / Controls bar - strictly fixed height with pixel-perfect vertical centering
+        // Filter / Controls bar with quick Choose Folder action
         Rectangle {
             vertical-stretch: 0;
-            height: 50px;
+            height: 52px;
             background: Theme.card;
-            border-radius: 8px;
+            border-radius: 10px;
             border-width: 1px;
             border-color: Theme.border;
 
@@ -97,7 +97,7 @@ export component LivePage inherits Rectangle {
                 HorizontalLayout {
                     spacing: 10px;
                     alignment: start;
-                    height: 34px;
+                    height: 36px;
                     y: (parent.height - self.height) / 2;
 
                     Text {
@@ -110,7 +110,7 @@ export component LivePage inherits Rectangle {
 
                     ComboBox {
                         width: 180px;
-                        height: 34px;
+                        height: 36px;
                         model: AppStore.live-categories;
                         current-value: AppStore.active-live-category;
                         selected(val) => {
@@ -119,11 +119,11 @@ export component LivePage inherits Rectangle {
                     }
                 }
 
-                // Right: Search Filter
+                // Right: Search Filter + Change Folder Button
                 HorizontalLayout {
-                    spacing: 10px;
+                    spacing: 12px;
                     alignment: end;
-                    height: 34px;
+                    height: 36px;
                     y: (parent.height - self.height) / 2;
 
                     Text {
@@ -135,12 +135,41 @@ export component LivePage inherits Rectangle {
                     }
 
                     LineEdit {
-                        width: 220px;
-                        height: 34px;
+                        width: 200px;
+                        height: 36px;
                         placeholder-text: "Search by name...";
                         text: AppStore.live-search-query;
                         edited(text) => {
                             AppStore.filter-live-search(text);
+                        }
+                    }
+
+                    // Quick Folder Change Button
+                    Rectangle {
+                        width: 130px;
+                        height: 36px;
+                        border-radius: 8px;
+                        background: folder-touch.has-hover ? Theme.accent : Theme.sunken;
+                        border-width: 1px;
+                        border-color: folder-touch.has-hover ? Theme.accent : Theme.border;
+                        animate background { duration: 150ms; }
+                        animate border-color { duration: 150ms; }
+
+                        Text {
+                            text: "Change Folder";
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: folder-touch.has-hover ? (Theme.dark ? #000000 : #ffffff) : Theme.text;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                            animate color { duration: 150ms; }
+                        }
+
+                        folder-touch := TouchArea {
+                            width: 100%;
+                            height: 100%;
+                            clicked => { AppStore.select-live-wallpaper-dir(); }
+                            mouse-cursor: pointer;
                         }
                     }
                 }
@@ -164,7 +193,7 @@ export component LivePage inherits Rectangle {
                 height: 100%;
 
                 Text {
-                    text: "No live wallpapers found";
+                    text: AppStore.live-search-query != "" ? "No matching wallpapers found" : "No live wallpapers found";
                     color: Theme.text;
                     font-size: 16px;
                     font-weight: 700;
@@ -172,7 +201,9 @@ export component LivePage inherits Rectangle {
                 }
 
                 Text {
-                    text: "Select a folder containing video wallpapers (.mp4, .webm, .mkv, .mov, etc.)";
+                    text: AppStore.live-search-query != "" 
+                        ? "Try adjusting your search filter" 
+                        : "Select a folder containing video wallpapers (.mp4, .webm, .mkv, .mov, etc.)";
                     color: Theme.text-secondary;
                     font-size: 13px;
                     horizontal-alignment: center;
@@ -182,7 +213,33 @@ export component LivePage inherits Rectangle {
 
                 HorizontalLayout {
                     alignment: center;
-                    Rectangle {
+
+                    if AppStore.live-search-query != "" : Rectangle {
+                        width: 160px;
+                        height: 38px;
+                        background: Theme.accent;
+                        border-radius: 8px;
+
+                        Text {
+                            text: "Clear Filter";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Theme.dark ? #000000 : #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        TouchArea {
+                            width: 100%;
+                            height: 100%;
+                            clicked => { 
+                                AppStore.filter-live-search("");
+                            }
+                            mouse-cursor: pointer;
+                        }
+                    }
+
+                    if AppStore.live-search-query == "" : Rectangle {
                         width: 180px;
                         height: 38px;
                         background: Theme.accent;
@@ -198,6 +255,8 @@ export component LivePage inherits Rectangle {
                         }
 
                         TouchArea {
+                            width: 100%;
+                            height: 100%;
                             clicked => { AppStore.select-live-wallpaper-dir(); }
                             mouse-cursor: pointer;
                         }
@@ -229,19 +288,19 @@ export component LivePage inherits Rectangle {
                         if row.items.length < 4 : Rectangle {
                             horizontal-stretch: 1;
                             min-width: 0px;
-                            preferred-width: 200px;
+                            preferred-width: 220px;
                             opacity: 0;
                         }
                         if row.items.length < 3 : Rectangle {
                             horizontal-stretch: 1;
                             min-width: 0px;
-                            preferred-width: 200px;
+                            preferred-width: 220px;
                             opacity: 0;
                         }
                         if row.items.length < 2 : Rectangle {
                             horizontal-stretch: 1;
                             min-width: 0px;
-                            preferred-width: 200px;
+                            preferred-width: 220px;
                             opacity: 0;
                         }
                     }
