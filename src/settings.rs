@@ -9,6 +9,12 @@ use windows::core::PCWSTR;
 pub struct Settings {
     pub wallpaper_dir: Option<PathBuf>,
     pub live_wallpaper_dir: Option<PathBuf>,
+    #[serde(default)]
+    pub active_live_wallpaper: Option<PathBuf>,
+    #[serde(default)]
+    pub active_static_wallpaper: Option<PathBuf>,
+    #[serde(default)]
+    pub wallpaper_mode: String,
     pub run_on_startup: bool,
     pub pause_on_fullscreen: bool,
     pub mute_live_wallpapers: bool,
@@ -19,6 +25,9 @@ impl Default for Settings {
         Self {
             wallpaper_dir: None,
             live_wallpaper_dir: None,
+            active_live_wallpaper: None,
+            active_static_wallpaper: None,
+            wallpaper_mode: String::new(),
             run_on_startup: false,
             pause_on_fullscreen: true,
             mute_live_wallpapers: true,

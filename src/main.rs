@@ -266,11 +266,16 @@ fn main() -> Result<(), slint::PlatformError> {
     start_fullscreen_monitor(settings.clone());
 
     // Load static and live wallpapers on startup
-    let (static_dir, live_dir) = {
+    let (static_dir, live_dir, active_live, wallpaper_mode) = {
         if let Ok(s) = settings.lock() {
-            (s.wallpaper_dir.clone(), s.live_wallpaper_dir.clone())
+            (
+                s.wallpaper_dir.clone(),
+                s.live_wallpaper_dir.clone(),
+                s.active_live_wallpaper.clone(),
+                s.wallpaper_mode.clone(),
+            )
         } else {
-            (None, None)
+            (None, None, None, String::new())
         }
     };
 
@@ -283,6 +288,27 @@ fn main() -> Result<(), slint::PlatformError> {
     } else if let Some(ref dir) = static_dir {
         // Fallback: If live directory is not set, scan static directory for live video wallpapers
         scan_and_refresh_live(dir.clone(), state.clone(), main_window.as_weak());
+    }
+
+    // Auto-restore live wallpaper on startup if previously active
+    if wallpaper_mode == "live" || active_live.is_some() {
+        if let Some(ref live_path) = active_live {
+            if live_path.exists() {
+                let live_path_clone = live_path.clone();
+                let win_weak_startup = main_window.as_weak();
+                thread::spawn(move || {
+                    // Small delay ensures Windows Explorer / WorkerW is fully initialized on boot
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    if let Ok(_) = apply_live_wallpaper(&live_path_clone) {
+                        let _ = slint::invoke_from_event_loop(move || {
+                            if let Some(window) = win_weak_startup.upgrade() {
+                                window.global::<AppStore>().set_live_wallpaper_active(true);
+                            }
+                        });
+                    }
+                });
+            }
+        }
     }
 
     // --- Static wallpaper directory picker ---
@@ -344,10 +370,17 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    let settings_for_static_apply = settings.clone();
     let window_weak_static = main_window.as_weak();
     app_store.on_apply_static_wallpaper(move |path| {
         let path_buf = PathBuf::from(path.as_str());
         let _ = apply_static_wallpaper(&path_buf);
+        if let Ok(mut s) = settings_for_static_apply.lock() {
+            s.active_live_wallpaper = None;
+            s.active_static_wallpaper = Some(path_buf);
+            s.wallpaper_mode = "static".to_string();
+            let _ = s.save();
+        }
         if let Some(window) = window_weak_static.upgrade() {
             window.global::<AppStore>().set_live_wallpaper_active(false);
         }
@@ -484,6 +517,7 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    let settings_for_live_apply = settings.clone();
     let live_ctrl_apply = live_controller.clone();
     let window_weak = main_window.as_weak();
     app_store.on_apply_live_wallpaper(move |path| {
@@ -497,9 +531,21 @@ fn main() -> Result<(), slint::PlatformError> {
         // Apply as desktop wallpaper via WorkerW + mpv
         match apply_live_wallpaper(&path_buf) {
             Ok(_) => {
+                let mut run_on_startup_now = true;
+                if let Ok(mut s) = settings_for_live_apply.lock() {
+                    s.active_live_wallpaper = Some(path_buf.clone());
+                    s.wallpaper_mode = "live".to_string();
+                    if !s.run_on_startup {
+                        s.set_run_on_startup(true);
+                    } else {
+                        let _ = s.save();
+                    }
+                    run_on_startup_now = s.run_on_startup;
+                }
                 if let Some(window) = window_weak.upgrade() {
                     window.global::<AppStore>().set_live_wallpaper_active(true);
                     window.global::<AppStore>().set_live_preview_visible(false);
+                    window.global::<AppStore>().set_run_on_startup(run_on_startup_now);
                 }
             }
             Err(e) => {
@@ -508,9 +554,15 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    let settings_for_stop = settings.clone();
     let window_weak = main_window.as_weak();
     app_store.on_stop_desktop_live_wallpaper(move || {
         let _ = stop_live_wallpaper();
+        if let Ok(mut s) = settings_for_stop.lock() {
+            s.active_live_wallpaper = None;
+            s.wallpaper_mode = "static".to_string();
+            let _ = s.save();
+        }
         if let Some(window) = window_weak.upgrade() {
             window
                 .global::<AppStore>()
