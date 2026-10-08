@@ -1,5 +1,5 @@
 [package]
-name = "rexpaper-tauri"
+name = "rexpaper"
 version = "1.0.3"
 edition = "2024"
 description = "A fast, native wallpaper manager for Windows with mpv live wallpapers"

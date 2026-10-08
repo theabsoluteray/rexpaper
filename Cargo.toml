@@ -1,37 +1,6 @@
 [workspace]
 members = ["crates/rexpaper-core", "src-tauri"]
-# Bare `cargo build/run/test` stays on the Slint app + core (v1 workflow);
-# the Tauri app is built explicitly via `cargo build -p rexpaper-tauri`
-# or `npm run tauri dev`.
-default-members = [".", "crates/rexpaper-core"]
 resolver = "2"
-
-[package]
-name = "rexpaper"
-version = "1.0.3"
-edition = "2024"
-description = "A fast, native wallpaper manager for Windows with mpv live wallpapers, built with Rust + Slint"
-license = "GPL-3.0"
-repository = "https://github.com/theabsoluteray/rexpaper"
-categories = ["desktop-environment", "multimedia", "gui"]
-keywords = ["wallpaper", "live-wallpaper", "mpv", "slint"]
-
-[dependencies]
-rexpaper-core = { path = "crates/rexpaper-core" }
-slint = { version = "1.17", features = ["raw-window-handle-06"] }
-raw-window-handle = "0.6"
-rfd = "0.15"
-
-[target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.61", features = [
-    "Win32_Foundation",
-    "Win32_UI_HiDpi",
-    "Win32_System_Com",
-] }
-
-[build-dependencies]
-slint-build = "1.17"
-winres = "0.1"
 
 [profile.release]
 opt-level = 3

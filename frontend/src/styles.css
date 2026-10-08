@@ -4,7 +4,7 @@
 @source "../index.html";
 @source "../src";
 
-/* Flat v1 design tokens (ui/store.slint dark theme) — no gradients. */
+/* Flat v1 design tokens (dark theme) — no gradients. */
 @theme {
   --color-bg: #0d0f17;
   --color-panel: #121520;

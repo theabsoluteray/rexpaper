@@ -2,6 +2,8 @@
 
 Status: `ready-for-agent`
 Decisions: settled in grilling session (2026-10-07)
+Amended: 2026-10-08 — Slint app, WiX packaging, and old release CI removed;
+app package renamed `rexpaper-tauri` → `rexpaper`.
 
 ---
 
@@ -19,8 +21,9 @@ thumbnail pipeline, tray, and settings — intact.
 Rebuild RexPaper's presentation layer on Tauri v2. The existing Rust core is extracted
 into a reusable `rexpaper-core` library crate. A new Tauri app (`src-tauri/`) exposes
 that core through typed commands and events. The UI is a minimal Preact + Tailwind
-single-page app served by Tauri's WebView, migrated one page at a time so the working
-Slint application remains usable until the new UI reaches parity.
+single-page app served by Tauri's WebView, built up one page at a time. The old
+Slint application has been removed from the repository; git history is the rollback
+path.
 
 Design language is explicitly minimal: flat surfaces, hairline borders, no gradients,
 no neon, no glow, no decorative AI-generated visual filler.
@@ -95,8 +98,9 @@ no neon, no glow, no decorative AI-generated visual filler.
     that UI-backend contracts are explicit and compile-checked.
 33. As a developer, I want async progress events for scans and thumbnail
     generation, so that the UI can show loading states without polling.
-34. As a developer, I want the Slint app to keep building until parity is
-    reached, so that migration is reversible page by page.
+34. As a developer, I want the Slint UI and WiX packaging removed once the
+    Tauri scaffold builds and links, so that only one codebase and one build
+    pipeline remain.
 35. As a user, I want an NSIS installer and portable zip produced by Tauri's
     bundler, so that distribution gets simpler than the WiX pipeline.
 36. As a user, I want existing `settings.json` values imported automatically, so
@@ -131,9 +135,13 @@ no neon, no glow, no decorative AI-generated visual filler.
   Live Page, Settings, Pause Live Wallpaper, Next Wallpaper, Open Wallpaper
   Folder, Quit. Tray icon rendering keeps the v1 embedded-icon resource so
   DPI metrics stay correct.
-- **Settings**: `tauri-plugin-store` for JSON persistence in the app data
-  directory, with an import path that migrates v1
-  `%APPDATA%/rexpaper/settings.json` on first run.
+- **Settings**: persisted by core's own `Settings::load()/save()` over a
+  managed `Arc<Mutex<Settings>>` (the `tauri-plugin-store` dependency is
+  pinned but its wiring is deferred). The active file is the ProjectDirs path
+  `%APPDATA%/rexpaper/RexPaper/config/settings.json`, shared byte-for-byte
+  with the installed v1 app, so no first-run migration is needed; the legacy
+  `%APPDATA%/rexpaper/settings.json` is a stale fallback read only when the
+  active file is missing.
 - **Autostart**: stays a Rust-side command writing
   `HKCU\...\Windows\CurrentVersion\Run` with `--autostart --minimized`,
   preserving v1 behavior; Tauri's autostart plugin is not used.
@@ -144,8 +152,13 @@ no neon, no glow, no decorative AI-generated visual filler.
 - **Grid model**: flat arrays in the store; row grouping is a view concern
   performed with CSS grid rather than pre-chunked row structs (the v1
   `RowData` chunking does not carry over).
-- **Migration**: incremental. The Slint target remains buildable; each page is
-  cut over to Tauri only after parity is verified side by side.
+- **Migration**: the Slint app, root package, WiX packaging, and the old
+  release workflow were removed as soon as the Tauri scaffold built and linked
+  green (2026-10-08). The new UI still grows page by page, but there is no
+  side-by-side parity check — reversibility is git history only.
+- **Naming**: the app package in `src-tauri/` is named `rexpaper` (binary
+  `rexpaper.exe`); `productName` stays `RexPaper`; the directory name
+  `src-tauri/` is the Tauri CLI convention and does not affect naming.
 - **Packaging**: Tauri bundler with NSIS; mpv binaries/DLLs staged via Tauri's
   `resources`/`externalBin` config plus a post-build copy step equivalent to
   v1 `build.rs`.
@@ -185,8 +198,9 @@ state layout.
 - Third-party JS plugin/extension system.
 - In-app live wallpaper preview using libmpv rendering inside the WebView.
 - Redesign of the WorkerW/mpv desktop injection mechanism (ported as-is).
-- WiX MSI packaging (replaced by NSIS in this spec; WiX stays only until
-  cutover if a hotfix release is needed on v1).
+- WiX MSI packaging (removed with the Slint app; releases of historical v1
+  tags still work because GitHub runs the workflow at that ref. New
+  packaging is NSIS via the Tauri bundler).
 - Dark/light theme beyond the existing two-token palette.
 - Automated UI screenshot/regression testing.
 
@@ -195,9 +209,9 @@ state layout.
 - The v1 codebase is Windows-only and deeply Win32-dependent; Tauri was chosen
   for UI modernization, not portability. `windows-rs` usage carries over
   unchanged.
-- Incremental migration implies both UIs can exist in the repo for a while.
-  Keep `ui/` (Slint) and the Tauri frontend in clearly separated trees and
-  make the default `cargo run` target explicit to avoid ambiguity.
+- The Slint app (`src/`, `ui/`), root Cargo package, `wix/`, and
+  `.github/workflows/release.yml` are gone; bare `cargo build` builds the
+  workspace (core + Tauri app), and `npm run tauri dev` is the dev workflow.
 - The command/event contract should be documented in one place (a TS types
   module generated or hand-maintained alongside the Rust command module) so
   the two sides cannot silently drift.

@@ -20,7 +20,6 @@ desktop.ini
 # Test / Dev artifacts
 test_*.rs
 *.log
-/target
 
 # Local-only engineering notes (never push these)
 DEV_WINDOWS_FIX_NOTES.md
@@ -34,12 +33,6 @@ DEV_*.md
 /mpv-runtime/
 /mpv/
 /mpv-staging/
-
-# WiX build outputs
-/wix/obj/
-*.wixobj
-*.wixpdb
-*.msi
 
 # Frontend (Preact + Vite)
 /node_modules/
