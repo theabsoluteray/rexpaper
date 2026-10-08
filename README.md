@@ -40,6 +40,34 @@ It manages thousands of ultra-high-resolution 4K/8K static wallpapers or renders
 
 ---
 
+## Current Status
+
+_Last updated 2026-10-08._
+
+**Working today** (verified with `npm run tauri dev`):
+
+- Workspace builds clean: `cargo check --workspace` and `npm run build` are green; the app links against mpv and launches.
+- **App shell** — frameless window with a custom titlebar (File / View / Help menus, minimize / maximize / close buttons, drag-to-move, double-click to maximize) and a sidebar routing between Static, Live, and Settings pages.
+- **Settings page** — read-only settings summary and a "Scan libraries" button wired to real commands (settings load from the config file shared with v1; scans walk the configured folders).
+- **Backend command layer** — 9 typed Tauri commands: settings getters/setters (persisted), static/live scan, static wallpaper apply.
+- **Core extraction** — all v1 backend logic (scanner, thumbnails, Win32/WorkerW injection, mpv, tray, settings) lives UI-free in `crates/rexpaper-core`.
+
+**Verified end-to-end:** first launch, window opens maximized, IPC works, scans return counts.
+
+## Pending Work
+
+In planned order, one commit per slice:
+
+1. **Static gallery** — `rfd` folder pickers, thumbnail delivery over the Tauri asset protocol (batch resolver + background precompute with progress events), card grid with lazy thumbnails, category filter, live search, click-to-apply with active highlight.
+2. **Live gallery** — video thumbnails, hover preview over range-request URLs, apply / stop controls.
+3. **Settings + tray + window behavior** — toggle UI, system tray menu (Open, Static, Live, Settings, Pause, Next, Open Folder, Quit), tray-driven routing, hidden start on `--autostart`/`--minimized`, restore active wallpaper on startup, fullscreen-pause thread.
+4. **README visual refresh** — screenshot of the new UI once the galleries exist.
+5. **Packaging + CI** — NSIS installer via `tauri build` with mpv DLL staging, rebuilt release workflow.
+
+Known dev-workaround: the registry write for "run on startup" must stay guarded out of debug builds so dev runs cannot hijack the installed v1 autostart entry.
+
+---
+
 ## Features
 
 ### High-Performance Static Wallpaper Gallery
@@ -163,6 +191,7 @@ rexpaper/
 
 - [x] **Core extraction** &mdash; UI-free `rexpaper-core` workspace crate.
 - [x] **Tauri v2 + Preact scaffold** &mdash; typed commands, minimal settings/scan UI.
+- [x] **First launch + app shell** &mdash; frameless window, custom titlebar with menus and window controls, sidebar routing.
 - [ ] **Static gallery page** &mdash; grid, categories, search, lazy thumbnails, apply.
 - [ ] **Live gallery page** &mdash; video thumbnails and playback controls.
 - [ ] **Settings page** &mdash; directory pickers, toggles, tray + autostart wiring.
