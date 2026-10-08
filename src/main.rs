@@ -2,14 +2,16 @@
 
 slint::include_modules!();
 
-mod models;
-mod scanner;
-mod thumbnail;
-mod static_wallpaper;
-mod live_wallpaper;
-mod mpv_player;
-mod platform;
-mod settings;
+use rexpaper_core::models::AppState;
+use rexpaper_core::{
+    live_wallpaper::LiveWallpaperController, platform::tray, settings::Settings,
+    static_wallpaper::apply_static_wallpaper, static_wallpaper::scan_and_load_static,
+    live_wallpaper::scan_and_load_live,
+    platform::windows::{
+        apply_live_wallpaper, is_live_wallpaper_active, start_fullscreen_monitor,
+        stop_live_wallpaper,
+    },
+};
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -17,19 +19,21 @@ use slint::{VecModel, ModelRc, SharedString, Image};
 use std::rc::Rc;
 use std::thread;
 
-use crate::models::AppState;
-
-// Re-export types used by submodules via `crate::` paths
-pub use crate::models::{SharedState, WallpaperItem, LiveWallpaperItem};
-use crate::static_wallpaper::{apply_static_wallpaper, scan_and_load_static};
-use crate::live_wallpaper::{scan_and_load_live, LiveWallpaperController};
-use crate::platform::windows::{apply_live_wallpaper, stop_live_wallpaper, is_live_wallpaper_active, start_fullscreen_monitor};
-use crate::settings::Settings;
+// Re-export core types for convenience
+pub use rexpaper_core::{SharedState, WallpaperItem, LiveWallpaperItem};
 
 type ThreadSafeState = Arc<Mutex<AppState>>;
 
 pub fn load_image_from_path(path: &PathBuf) -> Result<Image, Box<dyn std::error::Error>> {
     Ok(Image::load_from_path(path)?)
+}
+
+/// Loads a cached thumbnail image; returns the default (empty) image while
+/// the thumbnail cache is still warming up on a first scan.
+fn load_thumb(thumb_path: Option<PathBuf>) -> Image {
+    thumb_path
+        .and_then(|p| Image::load_from_path(&p).ok())
+        .unwrap_or_default()
 }
 
 fn static_to_data(item: &WallpaperItem) -> WallpaperData {
@@ -40,7 +44,7 @@ fn static_to_data(item: &WallpaperItem) -> WallpaperData {
         .unwrap_or_else(|| item.category.clone());
     WallpaperData {
         name: name.into(),
-        thumb: crate::thumbnail::load_static_thumbnail(&item.path),
+        thumb: load_thumb(rexpaper_core::thumbnail::static_thumbnail_path(&item.path)),
         category: item.category.clone().into(),
         is_live: false,
         path: item.path.to_string_lossy().to_string().into(),
@@ -55,7 +59,7 @@ fn live_to_data(item: &LiveWallpaperItem) -> WallpaperData {
         .unwrap_or_else(|| item.category.clone());
     WallpaperData {
         name: name.into(),
-        thumb: crate::thumbnail::load_video_thumbnail(&item.path),
+        thumb: load_thumb(rexpaper_core::thumbnail::video_thumbnail_path(&item.path)),
         category: item.category.clone().into(),
         is_live: true,
         path: item.path.to_string_lossy().to_string().into(),
@@ -149,7 +153,7 @@ fn scan_and_refresh_static(dir: PathBuf, state: ThreadSafeState, window_weak: sl
             .lock()
             .map(|s| s.static_wallpapers.iter().map(|w| w.path.clone()).collect())
             .unwrap_or_default();
-        crate::thumbnail::precompute_static_thumbnails(&paths);
+        rexpaper_core::thumbnail::precompute_static_thumbnails(&paths);
 
         let win_after = window_weak.clone();
         let state_after = state.clone();
@@ -178,7 +182,7 @@ fn scan_and_refresh_live(dir: PathBuf, state: ThreadSafeState, window_weak: slin
             .lock()
             .map(|s| s.live_wallpapers.iter().map(|w| w.path.clone()).collect())
             .unwrap_or_default();
-        crate::thumbnail::precompute_video_thumbnails(&paths);
+        rexpaper_core::thumbnail::precompute_video_thumbnails(&paths);
 
         let win_after = window_weak.clone();
         let state_after = state.clone();
@@ -228,31 +232,31 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // Setup Windows System Tray (Taskbar Notification Area)
     let window_weak_tray = main_window.as_weak();
-    let _ = crate::platform::tray::setup_tray(move |action| {
+    let _ = tray::setup_tray(move |action| {
         let win_weak = window_weak_tray.clone();
         let _ = slint::invoke_from_event_loop(move || {
             if let Some(window) = win_weak.upgrade() {
                 match action {
-                    crate::platform::tray::TrayAction::Open => {
+                    tray::TrayAction::Open => {
                         let _ = window.show();
                         window.window().set_minimized(false);
                     }
-                    crate::platform::tray::TrayAction::StaticPage => {
+                    tray::TrayAction::StaticPage => {
                         window.set_active_page("static".into());
                         let _ = window.show();
                         window.window().set_minimized(false);
                     }
-                    crate::platform::tray::TrayAction::LivePage => {
+                    tray::TrayAction::LivePage => {
                         window.set_active_page("live".into());
                         let _ = window.show();
                         window.window().set_minimized(false);
                     }
-                    crate::platform::tray::TrayAction::SettingsPage => {
+                    tray::TrayAction::SettingsPage => {
                         window.set_active_page("settings".into());
                         let _ = window.show();
                         window.window().set_minimized(false);
                     }
-                    crate::platform::tray::TrayAction::Quit => {
+                    tray::TrayAction::Quit => {
                         let _ = slint::quit_event_loop();
                         std::process::exit(0);
                     }

@@ -147,7 +147,7 @@ unsafe extern "system" fn tray_wnd_proc(
     unsafe { DefWindowProcW(hwnd, msg, wparam, lparam) }
 }
 
-static ICON_BYTES: &[u8] = include_bytes!("../../assets/icon.ico");
+static ICON_BYTES: &[u8] = include_bytes!("../../../../assets/icon.ico");
 
 unsafe fn load_tray_icon() -> HICON {
     unsafe {

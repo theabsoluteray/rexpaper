@@ -5,7 +5,6 @@ use std::process::Command;
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use rayon::prelude::*;
-use slint::Image;
 
 const THUMB_WIDTH: u32 = 384;
 const THUMB_HEIGHT: u32 = 216;
@@ -68,28 +67,20 @@ pub fn precompute_video_thumbnails(paths: &[PathBuf]) {
     });
 }
 
-/// Loads a lightweight cached thumbnail for a static image.
-pub fn load_static_thumbnail(image_path: &Path) -> Image {
+/// Returns the cached thumbnail path for a static image if it exists.
+/// UI layers load the image from this path themselves.
+pub fn static_thumbnail_path(image_path: &Path) -> Option<PathBuf> {
     let cache_dir = get_cache_dir().join("static-thumbs");
     let cached = cache_path(image_path, &cache_dir, CACHE_VERSION);
-    if is_valid_cache_file(&cached) {
-        if let Ok(img) = Image::load_from_path(&cached) {
-            return img;
-        }
-    }
-    Image::default()
+    is_valid_cache_file(&cached).then_some(cached)
 }
 
-/// Loads a lightweight cached thumbnail for a video file.
-pub fn load_video_thumbnail(video_path: &Path) -> Image {
+/// Returns the cached thumbnail path for a video file if it exists.
+/// UI layers load the image from this path themselves.
+pub fn video_thumbnail_path(video_path: &Path) -> Option<PathBuf> {
     let cache_dir = get_cache_dir().join("video-thumbs");
     let cached = cache_path(video_path, &cache_dir, CACHE_VERSION);
-    if is_valid_cache_file(&cached) {
-        if let Ok(img) = Image::load_from_path(&cached) {
-            return img;
-        }
-    }
-    Image::default()
+    is_valid_cache_file(&cached).then_some(cached)
 }
 
 fn is_valid_cache_file(path: &Path) -> bool {
@@ -113,31 +104,25 @@ fn hash_path(path: &Path) -> u64 {
     hasher.finish()
 }
 
-/// Extracts a video frame thumbnail:
+/// Extracts a video frame thumbnail to `out_path`:
 /// 1. Uses native Windows Shell API (hardware accelerated, instant, no external exe required).
 /// 2. Falls back to mpv image output extraction if available.
-pub fn extract_video_thumbnail(video_path: &Path, cache_dir: &Path, out_path: &Path) -> Option<Image> {
+///
+/// Returns the output path when a valid thumbnail was produced.
+pub fn extract_video_thumbnail(video_path: &Path, cache_dir: &Path, out_path: &Path) -> Option<PathBuf> {
     let _ = std::fs::create_dir_all(cache_dir);
 
     // 1. Try Windows Shell native thumbnail extraction
     #[cfg(target_os = "windows")]
     {
-        if extract_thumbnail_via_shell(video_path, out_path) {
-            if is_valid_cache_file(out_path) {
-                if let Ok(img) = Image::load_from_path(out_path) {
-                    return Some(img);
-                }
-            }
+        if extract_thumbnail_via_shell(video_path, out_path) && is_valid_cache_file(out_path) {
+            return Some(out_path.to_path_buf());
         }
     }
 
     // 2. Fallback to mpv image extraction
-    if extract_thumbnail_via_mpv(video_path, cache_dir, out_path) {
-        if is_valid_cache_file(out_path) {
-            if let Ok(img) = Image::load_from_path(out_path) {
-                return Some(img);
-            }
-        }
+    if extract_thumbnail_via_mpv(video_path, cache_dir, out_path) && is_valid_cache_file(out_path) {
+        return Some(out_path.to_path_buf());
     }
 
     None

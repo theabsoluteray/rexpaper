@@ -1,0 +1,20 @@
+[package]
+name = "rexpaper-tauri"
+version = "1.0.3"
+edition = "2024"
+description = "A fast, native wallpaper manager for Windows with mpv live wallpapers"
+license = "GPL-3.0"
+repository = "https://github.com/theabsoluteray/rexpaper"
+publish = false
+
+[dependencies]
+rexpaper-core = { path = "../crates/rexpaper-core" }
+tauri = { version = "2", features = [] }
+# Store wiring lands in Phase 3; dependency pinned now so Cargo.lock settles.
+tauri-plugin-store = "2"
+rfd = "0.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[build-dependencies]
+tauri-build = "2"

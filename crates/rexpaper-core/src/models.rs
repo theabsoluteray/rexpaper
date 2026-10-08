@@ -1,13 +1,14 @@
+use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct WallpaperItem {
     pub path: PathBuf,
     pub category: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct LiveWallpaperItem {
     pub path: PathBuf,
     pub category: String,

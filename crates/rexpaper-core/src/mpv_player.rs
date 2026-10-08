@@ -1,7 +1,6 @@
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use libmpv::Mpv;
-use slint::Image;
 
 pub struct MpvPlayer {
     mpv: Arc<Mutex<Mpv>>,
@@ -83,11 +82,6 @@ impl MpvPlayer {
         let mpv = self.mpv.lock().unwrap();
         mpv.set_property("mute", mute)?;
         Ok(())
-    }
-
-    #[allow(dead_code)]
-    pub fn render_frame(&mut self, _width: u32, _height: u32) -> Result<Image, Box<dyn std::error::Error>> {
-        Err("Preview not implemented in this version".into())
     }
 
     #[allow(dead_code)]

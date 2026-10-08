@@ -1,15 +1,9 @@
-// Re-export public types
-pub mod models;
-pub mod scanner;
-pub mod thumbnail;
-pub mod static_wallpaper;
-pub mod live_wallpaper;
-pub mod mpv_player;
-pub mod platform;
-pub mod settings;
-
-pub use models::{AppState, SharedState, WallpaperItem, LiveWallpaperItem};
-pub use settings::Settings;
+// Re-export the UI-free core engine so dependents can reach everything from
+// the root crate (mirrors the pre-Tauri monolith's API).
+pub use rexpaper_core::{
+    live_wallpaper, models, mpv_player, platform, scanner, settings, static_wallpaper, thumbnail,
+};
+pub use rexpaper_core::{AppState, LiveWallpaperItem, Settings, SharedState, WallpaperItem};
 
 // Include Slint modules to generate types
 slint::include_modules!();

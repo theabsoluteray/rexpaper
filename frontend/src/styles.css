@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Explicit sources: frontend files only, regardless of vite's cwd. */
+@source "../index.html";
+@source "../src";
+
+/* Flat v1 design tokens (ui/store.slint dark theme) — no gradients. */
+@theme {
+  --color-bg: #0d0f17;
+  --color-panel: #121520;
+  --color-card: #181c28;
+  --color-border: #262c3e;
+  --color-text: #ffffff;
+  --color-secondary: #a0a6b8;
+  --color-muted: #6d758a;
+  --color-accent: #6366f1;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}

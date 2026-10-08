@@ -44,15 +44,6 @@ impl LiveWallpaperController {
     }
 
     #[allow(dead_code)]
-    pub fn render_frame(&mut self, width: u32, height: u32) -> Result<slint::Image, Box<dyn std::error::Error>> {
-        if let Some(player) = &mut self.player {
-            player.render_frame(width, height)
-        } else {
-            Err("Player not initialized".into())
-        }
-    }
-
-    #[allow(dead_code)]
     pub fn set_mute(&self, mute: bool) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(player) = &self.player {
             player.set_mute(mute)

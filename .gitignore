@@ -40,3 +40,7 @@ DEV_*.md
 *.wixobj
 *.wixpdb
 *.msi
+
+# Frontend (Preact + Vite)
+/node_modules/
+/frontend/dist
