@@ -1,52 +1,60 @@
-import { useEffect } from "preact/hooks";
-import { signal } from "@preact/signals";
-import {
-  getSettings,
-  scanLive,
-  scanStatic,
-  type Settings,
-} from "./lib/api";
+import { useEffect, useState } from "preact/hooks";
+import { getVersion } from "@tauri-apps/api/app";
+import Titlebar from "./components/titlebar";
+import { Sidebar } from "./components/sidebar";
+import { StaticPage } from "./pages/static";
+import { LivePage } from "./pages/live";
+import { SettingsPage } from "./pages/settings";
+import { loadSettings, route, showAbout } from "./lib/store";
 
-const settings = signal<Settings | null>(null);
-const settingsError = signal<string | null>(null);
-const scanning = signal(false);
-const scanCounts = signal<{ staticCount: number; liveCount: number } | null>(
-  null,
-);
-const scanError = signal<string | null>(null);
+function AboutModal() {
+  const [version, setVersion] = useState<string>("");
 
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
+  useEffect(() => {
+    void getVersion()
+      .then(setVersion)
+      .catch(() => setVersion(""));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") showAbout.value = false;
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
-async function loadSettings(): Promise<void> {
-  try {
-    settings.value = await getSettings();
-    settingsError.value = null;
-  } catch (err) {
-    settingsError.value = errorMessage(err);
-  }
-}
-
-async function runScan(): Promise<void> {
-  scanning.value = true;
-  scanError.value = null;
-  try {
-    const statics = await scanStatic();
-    const lives = await scanLive();
-    scanCounts.value = { staticCount: statics.length, liveCount: lives.length };
-  } catch (err) {
-    scanError.value = errorMessage(err);
-  } finally {
-    scanning.value = false;
-  }
-}
-
-function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div class="flex items-baseline justify-between gap-4 border-b border-border py-2 last:border-b-0">
-      <dt class="shrink-0 text-sm text-secondary">{label}</dt>
-      <dd class="text-right text-sm break-all">{value}</dd>
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      onClick={() => {
+        showAbout.value = false;
+      }}
+    >
+      <div
+        role="dialog"
+        aria-label="About RexPaper"
+        class="w-80 rounded-lg border border-border bg-card p-5 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 class="text-sm font-semibold">RexPaper</h2>
+        <p class="mt-1 text-sm text-secondary">
+          {version !== "" ? `Version ${version}` : "Wallpaper manager for Windows"}
+        </p>
+        <p class="mt-3 text-sm text-muted">
+          A fast, native wallpaper manager for Windows with hardware-accelerated
+          live video wallpapers.
+        </p>
+        <p class="mt-3 text-xs text-muted">GPL-3.0 licensed.</p>
+        <div class="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              showAbout.value = false;
+            }}
+            class="rounded-md border border-border px-3 py-1.5 text-sm text-text transition-colors hover:bg-panel"
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -56,79 +64,18 @@ export function App() {
     void loadSettings();
   }, []);
 
-  const s = settings.value;
-  const counts = scanCounts.value;
-
   return (
-    <div class="flex min-h-screen flex-col bg-bg text-text">
-      <header class="flex items-baseline justify-between border-b border-border bg-panel px-6 py-4">
-        <h1 class="text-base font-semibold">RexPaper</h1>
-        <span class="text-xs text-muted">Tauri v2 migration &middot; Phase 0</span>
-      </header>
-
-      <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 p-6">
-        <section class="rounded-lg border border-border bg-card p-5">
-          <h2 class="mb-4 text-sm font-medium text-secondary">Settings</h2>
-          {settingsError.value !== null && (
-            <p class="text-sm text-red-400">{settingsError.value}</p>
-          )}
-          {settingsError.value === null && s === null && (
-            <p class="text-sm text-muted">Loading&hellip;</p>
-          )}
-          {settingsError.value === null && s !== null && (
-            <dl>
-              <Row label="Wallpaper folder" value={s.wallpaper_dir ?? "Not set"} />
-              <Row
-                label="Live wallpaper folder"
-                value={s.live_wallpaper_dir ?? "Not set"}
-              />
-              <Row label="Mode" value={s.wallpaper_mode || "\u2014"} />
-              <Row
-                label="Active static"
-                value={s.active_static_wallpaper ?? "\u2014"}
-              />
-              <Row
-                label="Active live"
-                value={s.active_live_wallpaper ?? "\u2014"}
-              />
-              <Row
-                label="Run on startup"
-                value={s.run_on_startup ? "On" : "Off"}
-              />
-              <Row
-                label="Pause on fullscreen"
-                value={s.pause_on_fullscreen ? "On" : "Off"}
-              />
-              <Row
-                label="Mute live wallpapers"
-                value={s.mute_live_wallpapers ? "On" : "Off"}
-              />
-            </dl>
-          )}
-        </section>
-
-        <section class="rounded-lg border border-border bg-card p-5">
-          <h2 class="mb-4 text-sm font-medium text-secondary">Libraries</h2>
-          <div class="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => void runScan()}
-              disabled={scanning.value}
-              class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
-            >
-              {scanning.value ? "Scanning\u2026" : "Scan libraries"}
-            </button>
-            {counts !== null && (
-              <span class="text-sm text-muted">
-                {counts.staticCount} static &middot; {counts.liveCount} live
-              </span>
-            )}
-          </div>
-          {scanError.value !== null && (
-            <p class="mt-3 text-sm text-red-400">{scanError.value}</p>
-          )}
-        </section>
-      </main>
+    <div class="flex h-screen flex-col overflow-hidden bg-bg text-text">
+      <Titlebar />
+      <div class="flex min-h-0 flex-1">
+        <Sidebar />
+        <main class="min-w-0 flex-1 overflow-y-auto bg-bg">
+          {route.value === "static" && <StaticPage />}
+          {route.value === "live" && <LivePage />}
+          {route.value === "settings" && <SettingsPage />}
+        </main>
+      </div>
+      {showAbout.value && <AboutModal />}
     </div>
   );
 }
